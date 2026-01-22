@@ -60,7 +60,7 @@ export default function Calendar({ selectedDate, onSelectDate, bookedDates, bloc
 
   const handleDateClick = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-    if (!isDatePast(date) && !isDateBlocked(date)) {
+    if (!isDatePast(date) && !isDateBlocked(date) && !isDateBooked(date)) {
       onSelectDate(date)
     }
   }
@@ -80,7 +80,7 @@ export default function Calendar({ selectedDate, onSelectDate, bookedDates, bloc
       const isBlocked = isDateBlocked(date)
       const isBooked = isDateBooked(date)
       const selected = isSelected(date)
-      const isDisabled = isPast || isBlocked
+      const isUnavailable = isPast || isBlocked || isBooked
 
       let className = 'calendar-day '
       if (selected) {
@@ -88,7 +88,7 @@ export default function Calendar({ selectedDate, onSelectDate, bookedDates, bloc
       } else if (isBooked) {
         className += 'booked '
       }
-      if (isDisabled) {
+      if (isPast || isBlocked) {
         className += 'disabled '
       }
 
@@ -96,9 +96,9 @@ export default function Calendar({ selectedDate, onSelectDate, bookedDates, bloc
         <button
           key={day}
           onClick={() => handleDateClick(day)}
-          disabled={isDisabled}
+          disabled={isUnavailable}
           className={className}
-          title={isBooked ? 'Already signed up' : isBlocked ? 'Not available' : ''}
+          title={isBooked ? 'Already has a sign-up' : isBlocked ? 'Not available' : isPast ? 'Past date' : 'Available'}
         >
           {day}
         </button>
@@ -148,12 +148,12 @@ export default function Calendar({ selectedDate, onSelectDate, bookedDates, bloc
 
       <div className="mt-4 flex gap-4 text-sm text-gray-600">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-[#e31837]" />
-          <span>Selected</span>
+          <div className="w-4 h-4 rounded-full bg-[#16a34a]" />
+          <span>Your selection</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-[#e8f5e9]" />
-          <span>Has sign-up</span>
+          <div className="w-4 h-4 rounded-full bg-[#fecaca]" />
+          <span>Already taken</span>
         </div>
       </div>
     </div>
