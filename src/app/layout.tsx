@@ -30,11 +30,12 @@ export default function RootLayout({
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <a href="/" className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#e31837] rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">KIC</span>
-              </div>
+              <img
+                src="https://www.kidsincrisis.org/wp-content/themes/iop-kidsincrisis-1_0_2/dist/images/kids-in-crisis-logo@2x.png"
+                alt="Kids In Crisis"
+                className="h-12 w-auto"
+              />
               <div>
-                <h1 className="font-bold text-xl text-gray-800">Kids In Crisis</h1>
                 <p className="text-sm text-gray-500">Meal Sign-Up</p>
               </div>
             </a>
