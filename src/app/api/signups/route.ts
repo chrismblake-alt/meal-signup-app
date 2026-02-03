@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
 
+const VALID_LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
+
 export async function GET() {
   try {
     const signups = await prisma.mealSignup.findMany({
@@ -19,21 +21,30 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, bringing, notes, date } = body
+    const { name, email, phone, bringing, mealValue, notes, date, location } = body
 
-    if (!name || !email || !phone || !bringing || !date) {
+    if (!name || !email || !phone || !bringing || !date || !location || !mealValue) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (!VALID_LOCATIONS.includes(location)) {
+      return NextResponse.json({ error: 'Invalid location' }, { status: 400 })
     }
 
     const parsedDate = new Date(date)
     parsedDate.setHours(12, 0, 0, 0)
 
     // Check if date is blocked
+    const startOfDay = new Date(parsedDate)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(parsedDate)
+    endOfDay.setHours(23, 59, 59, 999)
+
     const blockedDate = await prisma.blockedDate.findFirst({
       where: {
         date: {
-          gte: new Date(parsedDate.setHours(0, 0, 0, 0)),
-          lt: new Date(parsedDate.setHours(23, 59, 59, 999)),
+          gte: startOfDay,
+          lt: endOfDay,
         },
       },
     })
@@ -42,23 +53,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This date is not available' }, { status: 400 })
     }
 
+    // Check if this date+location combo is already taken
+    const existingSignup = await prisma.mealSignup.findFirst({
+      where: {
+        date: {
+          gte: startOfDay,
+          lt: endOfDay,
+        },
+        location,
+        cancelled: false,
+      },
+    })
+
+    if (existingSignup) {
+      return NextResponse.json({ error: `${location} is already taken for this date` }, { status: 400 })
+    }
+
     const signup = await prisma.mealSignup.create({
       data: {
         name,
         email,
         phone,
         bringing,
+        mealValue: parseFloat(mealValue),
         notes: notes || null,
         date: new Date(date),
+        location,
       },
     })
-
-    // Fetch current kid count settings
-    const settings = await prisma.siteSettings.findUnique({
-      where: { id: 'main' },
-    })
-    const kidCountMin = settings?.kidCountMin ?? 8
-    const kidCountMax = settings?.kidCountMax ?? 12
 
     // Send confirmation email
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
@@ -72,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: `Meal Sign-Up Confirmed - ${formattedDate}`,
+      subject: `Meal Sign-Up Confirmed - ${formattedDate} (${location})`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -97,16 +119,33 @@ export async function POST(request: NextRequest) {
 
               <div class="highlight">
                 <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Location:</strong> ${location}</p>
                 <p><strong>Bringing:</strong> ${bringing}</p>
+                <p><strong>Your estimated donation value:</strong> $${parseFloat(mealValue).toFixed(2)}</p>
               </div>
 
               <div style="background: #fff3cd; border: 2px solid #e31837; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
                 <p style="margin: 0; font-size: 16px; color: #333;"><strong>Please prepare meals for approximately</strong></p>
-                <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">${kidCountMin}-${kidCountMax} children</p>
-                <p style="margin: 0; font-size: 14px; color: #666;">This count is current as of your sign-up date</p>
+                <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">10 children</p>
+                <p style="margin: 0; font-size: 14px; color: #666;">at the ${location}</p>
               </div>
 
-              <p>The kids and staff are looking forward to your meal! Please plan to deliver between 5:00 PM and 6:00 PM.</p>
+              <p>The kids and staff are looking forward to your meal! Please plan to deliver between 1:00 PM and 6:00 PM.</p>
+
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>If you wish to drop off early in the day, please include reheating instructions.</li>
+              </ul>
+
+              <div style="margin: 20px 0;">
+                <p><strong>Delivery Options</strong></p>
+                <p>For those of you interested in delivery options – here are some local favorites:</p>
+                <ul style="padding-left: 20px;">
+                  <li>Chicken Joe's (High School Special NO soda, please) (203) 861-0099</li>
+                  <li>Garden Catering (203) 698-2900</li>
+                  <li>Arcuri's (Pizza) (203) 869-6999</li>
+                  <li>Pomodoro (Italian) (203) 698-7779</li>
+                </ul>
+              </div>
 
               <p>Need to cancel? Click the button below:</p>
               <a href="${cancelUrl}" class="btn">Cancel My Sign-Up</a>
