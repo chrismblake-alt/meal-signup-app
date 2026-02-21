@@ -26,6 +26,7 @@ export default function Home() {
   const [signupMode, setSignupMode] = useState<'single' | 'multi' | null>(null)
   const [stories, setStories] = useState<Story[]>([])
   const [signups, setSignups] = useState<Signup[]>([])
+  const [settings, setSettings] = useState({ kidCountMin: 8, kidCountMax: 12 })
   const [showSuccess, setShowSuccess] = useState(false)
   const [successCount, setSuccessCount] = useState(0)
 
@@ -38,6 +39,11 @@ export default function Home() {
     fetch('/api/signups')
       .then((res) => res.json())
       .then((data) => setSignups(data))
+      .catch(console.error)
+
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((data) => setSettings(data))
       .catch(console.error)
   }, [])
 
@@ -129,7 +135,7 @@ export default function Home() {
           <>
             {/* Kid Count */}
             <div className="mb-8">
-              <KidCount />
+              <KidCount min={settings.kidCountMin} max={settings.kidCountMax} />
             </div>
 
             {/* Main Content */}
