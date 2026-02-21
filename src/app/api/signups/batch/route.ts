@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { sendBatchConfirmationEmail } from '@/lib/email'
 
 const MAX_DATES = 30
+const LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
 
 export async function POST(request: NextRequest) {
   try {
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Batch check existing signups for all requested dates
+    // Batch check existing signups for all requested dates (with locations)
     const existingSignups = await prisma.mealSignup.findMany({
       where: {
         OR: dateRanges.map(({ start, end }) => ({
@@ -70,31 +71,46 @@ export async function POST(request: NextRequest) {
         })),
         cancelled: false,
       },
-      select: { date: true },
+      select: { date: true, location: true },
     })
 
-    // Check which dates are already taken
-    const takenDateStrs = new Set(
-      existingSignups.map((s) => s.date.toISOString().split('T')[0])
-    )
+    // Build a map of date -> taken locations
+    const takenLocationsMap: Record<string, string[]> = {}
+    existingSignups.forEach((s) => {
+      const dateStr = s.date.toISOString().split('T')[0]
+      if (!takenLocationsMap[dateStr]) takenLocationsMap[dateStr] = []
+      if (!takenLocationsMap[dateStr].includes(s.location)) {
+        takenLocationsMap[dateStr].push(s.location)
+      }
+    })
 
-    const takenDates = parsedDates.filter((d) =>
-      takenDateStrs.has(d.toISOString().split('T')[0])
-    )
+    // Auto-assign locations and check availability
+    const dateLocationPairs: Array<{ date: Date; location: string }> = []
+    const fullyBookedDates: string[] = []
 
-    if (takenDates.length > 0) {
-      const takenStrs = takenDates.map((d) =>
-        d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      )
+    for (const date of parsedDates) {
+      const dateStr = date.toISOString().split('T')[0]
+      const taken = takenLocationsMap[dateStr] || []
+      const available = LOCATIONS.find((l) => !taken.includes(l))
+      if (!available) {
+        fullyBookedDates.push(
+          date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        )
+      } else {
+        dateLocationPairs.push({ date, location: available })
+      }
+    }
+
+    if (fullyBookedDates.length > 0) {
       return NextResponse.json(
-        { error: `The following dates are already taken: ${takenStrs.join(', ')}` },
+        { error: `Both locations are taken for: ${fullyBookedDates.join(', ')}` },
         { status: 400 }
       )
     }
 
     // Create all signups in a transaction
     const signups = await prisma.$transaction(
-      parsedDates.map((date) =>
+      dateLocationPairs.map(({ date, location }) =>
         prisma.mealSignup.create({
           data: {
             name,
@@ -103,6 +119,7 @@ export async function POST(request: NextRequest) {
             bringing,
             notes: notes || null,
             date,
+            location,
           },
         })
       )
@@ -115,6 +132,7 @@ export async function POST(request: NextRequest) {
       bringing,
       signups: signups.map((s) => ({
         date: s.date,
+        location: s.location,
         cancelToken: s.cancelToken,
       })),
     })

@@ -28,9 +28,10 @@ export async function GET(request: NextRequest) {
     })
 
     // Generate CSV
-    const headers = ['Date', 'Name', 'Email', 'Phone', 'Bringing', 'Notes', 'Signed Up At']
+    const headers = ['Date', 'Location', 'Name', 'Email', 'Phone', 'Bringing', 'Notes', 'Signed Up At']
     const rows = signups.map((signup) => [
       new Date(signup.date).toLocaleDateString('en-US'),
+      signup.location,
       signup.name,
       signup.email,
       signup.phone,

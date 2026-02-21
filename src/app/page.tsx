@@ -17,6 +17,7 @@ interface Story {
 interface Signup {
   id: string
   date: string
+  location: string
   cancelled: boolean
 }
 
@@ -94,10 +95,22 @@ export default function Home() {
     setSelectedDates([])
   }
 
-  // Build a list of booked date strings
-  const bookedDates: string[] = signups
+  // Build a map of date string -> array of taken location names
+  const bookedLocations: Record<string, string[]> = {}
+  signups
     .filter((s) => !s.cancelled)
-    .map((s) => new Date(s.date).toISOString().split('T')[0])
+    .forEach((s) => {
+      const dateStr = new Date(s.date).toISOString().split('T')[0]
+      if (!bookedLocations[dateStr]) bookedLocations[dateStr] = []
+      if (s.location && !bookedLocations[dateStr].includes(s.location)) {
+        bookedLocations[dateStr].push(s.location)
+      }
+    })
+
+  // For single-date mode, get taken locations for the selected date
+  const takenLocations = selectedDate
+    ? bookedLocations[selectedDate.toISOString().split('T')[0]] || []
+    : []
 
   return (
     <div className="py-8 px-4">
@@ -145,6 +158,7 @@ export default function Home() {
                 <h2 className="text-xl font-semibold mb-4">1. Your Information</h2>
                 <SignUpForm
                   selectedDate={selectedDate}
+                  takenLocations={takenLocations}
                   onSuccess={handleSingleSuccess}
                   signupMode={signupMode}
                   onModeChange={handleModeChange}
@@ -161,7 +175,7 @@ export default function Home() {
                     <Calendar
                       selectedDate={selectedDate}
                       onSelectDate={setSelectedDate}
-                      bookedDates={bookedDates}
+                      bookedLocations={bookedLocations}
                       blockedDates={[]}
                     />
                   </>
@@ -173,7 +187,7 @@ export default function Home() {
                     <Calendar
                       selectedDate={null}
                       onSelectDate={() => {}}
-                      bookedDates={bookedDates}
+                      bookedLocations={bookedLocations}
                       blockedDates={[]}
                       multiSelect={true}
                       selectedDates={selectedDates}
@@ -182,6 +196,7 @@ export default function Home() {
                     <div className="mt-4">
                       <SelectedDatesList
                         dates={selectedDates}
+                        bookedLocations={bookedLocations}
                         onRemoveDate={handleToggleDate}
                       />
                     </div>

@@ -2,8 +2,11 @@
 
 import { useState } from 'react'
 
+const LOCATIONS = ['Brick Building', 'Yellow Farmhouse'] as const
+
 interface SignUpFormProps {
   selectedDate: Date | null
+  takenLocations: string[]
   onSuccess: () => void
   signupMode: 'single' | 'multi' | null
   onModeChange: (mode: 'single' | 'multi') => void
@@ -13,6 +16,7 @@ interface SignUpFormProps {
 
 export default function SignUpForm({
   selectedDate,
+  takenLocations,
   onSuccess,
   signupMode,
   onModeChange,
@@ -25,13 +29,21 @@ export default function SignUpForm({
     phone: '',
     bringing: '',
     notes: '',
+    location: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  const availableLocations = LOCATIONS.filter(l => !takenLocations.includes(l))
+
   const handleSingleSubmit = async () => {
     if (!selectedDate) {
       setError('Please select a date first')
+      return
+    }
+
+    if (!formData.location) {
+      setError('Please select a location')
       return
     }
 
@@ -55,7 +67,7 @@ export default function SignUpForm({
       }
 
       onSuccess()
-      setFormData({ name: '', email: '', phone: '', bringing: '', notes: '' })
+      setFormData({ name: '', email: '', phone: '', bringing: '', notes: '', location: '' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -93,7 +105,7 @@ export default function SignUpForm({
       }
 
       onMultiSuccess(selectedDates.length)
-      setFormData({ name: '', email: '', phone: '', bringing: '', notes: '' })
+      setFormData({ name: '', email: '', phone: '', bringing: '', notes: '', location: '' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -224,7 +236,7 @@ export default function SignUpForm({
                 }`}
               >
                 <p className="font-semibold text-sm">Single Date</p>
-                <p className="text-xs text-gray-500 mt-1">Choose one date</p>
+                <p className="text-xs text-gray-500 mt-1">Choose one date and location</p>
               </button>
               <button
                 type="button"
@@ -236,13 +248,13 @@ export default function SignUpForm({
                 }`}
               >
                 <p className="font-semibold text-sm">Multiple Dates</p>
-                <p className="text-xs text-gray-500 mt-1">Pick several dates at once</p>
+                <p className="text-xs text-gray-500 mt-1">Pick several dates, locations auto-assigned</p>
               </button>
             </div>
           </div>
         )}
 
-        {/* Single Date Mode - Date display */}
+        {/* Single Date Mode - Date display and location selector */}
         {signupMode === 'single' && (
           <>
             {selectedDate ? (
@@ -257,15 +269,46 @@ export default function SignUpForm({
             )}
 
             {selectedDate && (
+              <div>
+                <label className="form-label">Select Location *</label>
+                {availableLocations.length === 0 ? (
+                  <p className="text-red-600 text-sm">All locations are taken for this date.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {availableLocations.map(loc => (
+                      <label key={loc} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                        <input
+                          type="radio"
+                          name="location"
+                          value={loc}
+                          checked={formData.location === loc}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                          className="accent-[#e31837]"
+                        />
+                        <span className="font-medium">{loc}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {takenLocations.length > 0 && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Already taken: {takenLocations.join(', ')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {formData.location && (
               <div className="bg-[#fff3cd] border-2 border-[#e31837] rounded-lg p-4 text-center">
                 <p className="font-semibold text-gray-800">Please prepare meals for approximately</p>
                 <p className="text-3xl font-bold text-[#e31837] my-1">10 children</p>
+                <p className="text-sm text-gray-600">at the {formData.location}</p>
               </div>
             )}
 
             <button
               type="submit"
-              disabled={isSubmitting || !selectedDate}
+              disabled={isSubmitting || !selectedDate || !formData.location}
               className="btn-primary w-full"
             >
               {isSubmitting ? 'Signing Up...' : 'Sign Up for This Date'}
@@ -280,7 +323,7 @@ export default function SignUpForm({
               <div className="bg-[#fff3cd] border-2 border-[#e31837] rounded-lg p-4 text-center">
                 <p className="font-semibold text-gray-800">Please prepare meals for approximately</p>
                 <p className="text-3xl font-bold text-[#e31837] my-1">10 children</p>
-                <p className="text-sm text-gray-600">per delivery</p>
+                <p className="text-sm text-gray-600">per delivery (locations auto-assigned)</p>
               </div>
             )}
 

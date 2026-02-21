@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         date: true,
+        location: true,
         bringing: true,
         cancelled: true,
       },
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     await prisma.mealSignup.update({
       where: { cancelToken: token },
-      data: { cancelled: true },
+      data: { cancelled: true, cancelledAt: new Date() },
     })
 
     return NextResponse.json({ success: true })

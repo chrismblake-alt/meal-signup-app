@@ -6,6 +6,7 @@ interface Signup {
   id: string
   name: string
   date: string
+  location: string
   bringing: string
   cancelled: boolean
 }
@@ -120,6 +121,9 @@ export default function CancelPage({ params }: { params: Promise<{ token: string
 
           <p className="text-sm text-gray-500 mb-1 mt-3">Date</p>
           <p className="font-medium">{formattedDate}</p>
+
+          <p className="text-sm text-gray-500 mb-1 mt-3">Location</p>
+          <p className="font-medium">{signup?.location}</p>
 
           <p className="text-sm text-gray-500 mb-1 mt-3">Bringing</p>
           <p className="font-medium">{signup?.bringing}</p>

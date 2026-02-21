@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
 
                 <div class="highlight">
                   <p><strong>Date:</strong> ${formattedDate}</p>
+                  <p><strong>Location:</strong> ${signup.location}</p>
                   <p><strong>Bringing:</strong> ${signup.bringing}</p>
                 </div>
 

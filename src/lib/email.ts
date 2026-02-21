@@ -105,6 +105,7 @@ interface BatchSignupDetails {
   bringing: string
   signups: Array<{
     date: Date
+    location: string
     cancelToken: string
   }>
 }
@@ -126,6 +127,7 @@ export function sendBatchConfirmationEmail({ name, email, bringing, signups }: B
       return `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${formatted}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #eee;">${s.location}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">
             <a href="${cancelUrl}" style="color: #e31837; text-decoration: underline; font-size: 13px;">Cancel</a>
           </td>
@@ -172,6 +174,7 @@ export function sendBatchConfirmationEmail({ name, email, bringing, signups }: B
                 <thead>
                   <tr style="background: #f3f4f6;">
                     <th style="padding: 10px; text-align: left;">Date</th>
+                    <th style="padding: 10px; text-align: left;">Location</th>
                     <th style="padding: 10px; text-align: left;"></th>
                   </tr>
                 </thead>

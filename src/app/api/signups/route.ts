@@ -19,10 +19,16 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, bringing, notes, date } = body
+    const { name, email, phone, bringing, notes, date, location } = body
+
+    const VALID_LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
 
     if (!name || !email || !phone || !bringing || !date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (!location || !VALID_LOCATIONS.includes(location)) {
+      return NextResponse.json({ error: 'Please select a valid location' }, { status: 400 })
     }
 
     const parsedDate = new Date(date)
@@ -47,19 +53,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This date is not available' }, { status: 400 })
     }
 
-    // Check if this date is already taken
+    // Check if this date+location combo is already taken
     const existingSignup = await prisma.mealSignup.findFirst({
       where: {
         date: {
           gte: startOfDay,
           lt: endOfDay,
         },
+        location,
         cancelled: false,
       },
     })
 
     if (existingSignup) {
-      return NextResponse.json({ error: 'This date is already taken' }, { status: 400 })
+      return NextResponse.json({ error: `${location} is already taken for this date` }, { status: 400 })
     }
 
     const signup = await prisma.mealSignup.create({
@@ -70,6 +77,7 @@ export async function POST(request: NextRequest) {
         bringing,
         notes: notes || null,
         date: new Date(date),
+        location,
       },
     })
 
@@ -110,12 +118,14 @@ export async function POST(request: NextRequest) {
 
               <div class="highlight">
                 <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Location:</strong> ${location}</p>
                 <p><strong>Bringing:</strong> ${bringing}</p>
               </div>
 
               <div style="background: #fff3cd; border: 2px solid #e31837; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
                 <p style="margin: 0; font-size: 16px; color: #333;"><strong>Please prepare meals for approximately</strong></p>
                 <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">10 children</p>
+                <p style="margin: 0; font-size: 14px; color: #666;">at the ${location}</p>
               </div>
 
               <p>The kids and staff are looking forward to your meal! Please plan to deliver between 12:00 PM and 5:00 PM.</p>

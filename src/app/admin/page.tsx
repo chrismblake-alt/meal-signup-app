@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 interface Signup {
   id: string
   date: string
+  location: string
   name: string
   email: string
   phone: string
@@ -13,11 +14,6 @@ interface Signup {
   notes: string | null
   cancelled: boolean
   createdAt: string
-}
-
-interface Settings {
-  kidCountMin: number
-  kidCountMax: number
 }
 
 interface Story {
@@ -31,9 +27,8 @@ interface Story {
 export default function AdminDashboard() {
   const router = useRouter()
   const [signups, setSignups] = useState<Signup[]>([])
-  const [settings, setSettings] = useState<Settings>({ kidCountMin: 8, kidCountMax: 12 })
   const [stories, setStories] = useState<Story[]>([])
-  const [activeTab, setActiveTab] = useState<'signups' | 'settings' | 'stories'>('signups')
+  const [activeTab, setActiveTab] = useState<'signups' | 'stories'>('signups')
   const [loading, setLoading] = useState(true)
 
   // New story form
@@ -45,18 +40,15 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [signupsRes, settingsRes, storiesRes] = await Promise.all([
+      const [signupsRes, storiesRes] = await Promise.all([
         fetch('/api/signups'),
-        fetch('/api/settings'),
         fetch('/api/stories'),
       ])
 
       const signupsData = await signupsRes.json()
-      const settingsData = await settingsRes.json()
       const storiesData = await storiesRes.json()
 
       setSignups(Array.isArray(signupsData) ? signupsData : [])
-      setSettings(settingsData)
       setStories(Array.isArray(storiesData) ? storiesData : [])
     } catch (error) {
       console.error('Failed to load data:', error)
@@ -68,29 +60,6 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     await fetch('/api/auth', { method: 'DELETE' })
     router.push('/admin/login')
-  }
-
-  const updateSettings = async () => {
-    try {
-      const response = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        if (data.error === 'Unauthorized') {
-          router.push('/admin/login')
-          return
-        }
-      }
-
-      alert('Settings updated!')
-    } catch (error) {
-      console.error('Failed to update settings:', error)
-      alert('Failed to update settings')
-    }
   }
 
   const addStory = async () => {
@@ -153,6 +122,19 @@ export default function AdminDashboard() {
     .filter((s) => !s.cancelled && new Date(s.date) >= new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
+  // Group upcoming signups by date
+  const signupsByDate: Record<string, Signup[]> = {}
+  for (const signup of upcomingSignups) {
+    const dateStr = new Date(signup.date).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    if (!signupsByDate[dateStr]) signupsByDate[dateStr] = []
+    signupsByDate[dateStr].push(signup)
+  }
+
   if (loading) {
     return (
       <div className="py-16 text-center">
@@ -177,7 +159,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
             <p className="text-3xl font-bold text-[#e31837]">{upcomingSignups.length}</p>
             <p className="text-gray-600 text-sm">Upcoming Meals</p>
@@ -187,12 +169,6 @@ export default function AdminDashboard() {
               {signups.filter((s) => !s.cancelled).length}
             </p>
             <p className="text-gray-600 text-sm">Total Sign-ups</p>
-          </div>
-          <div className="card text-center">
-            <p className="text-3xl font-bold text-[#e31837]">
-              {settings.kidCountMin}-{settings.kidCountMax}
-            </p>
-            <p className="text-gray-600 text-sm">Current Kids</p>
           </div>
           <div className="card text-center">
             <p className="text-3xl font-bold text-[#e31837]">{stories.length}</p>
@@ -211,16 +187,6 @@ export default function AdminDashboard() {
             }`}
           >
             Upcoming Meals
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`pb-3 px-1 font-medium transition ${
-              activeTab === 'settings'
-                ? 'text-[#e31837] border-b-2 border-[#e31837]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Settings
           </button>
           <button
             onClick={() => setActiveTab('stories')}
@@ -249,76 +215,36 @@ export default function AdminDashboard() {
                 No upcoming meals scheduled
               </div>
             ) : (
-              <div className="space-y-4">
-                {upcomingSignups.map((signup) => (
-                  <div key={signup.id} className="card">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-[#e31837]">
-                          {new Date(signup.date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-                        <p className="font-medium text-lg">{signup.name}</p>
-                        <p className="text-gray-600">{signup.bringing}</p>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        <p>{signup.email}</p>
-                        <p>{signup.phone}</p>
-                      </div>
+              <div className="space-y-6">
+                {Object.entries(signupsByDate).map(([dateStr, dateSignups]) => (
+                  <div key={dateStr}>
+                    <h3 className="font-semibold text-[#e31837] text-lg mb-3">{dateStr}</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {dateSignups.map((signup) => (
+                        <div key={signup.id} className="card">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-block bg-[#e31837]/10 text-[#e31837] text-xs font-semibold px-2 py-1 rounded">
+                              {signup.location}
+                            </span>
+                          </div>
+                          <p className="font-medium text-lg">{signup.name}</p>
+                          <p className="text-gray-600">{signup.bringing}</p>
+                          <div className="text-sm text-gray-500 mt-2">
+                            <p>{signup.email}</p>
+                            <p>{signup.phone}</p>
+                          </div>
+                          {signup.notes && (
+                            <p className="mt-2 text-sm text-gray-500 italic">
+                              Note: {signup.notes}
+                            </p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                    {signup.notes && (
-                      <p className="mt-2 text-sm text-gray-500 italic">
-                        Note: {signup.notes}
-                      </p>
-                    )}
                   </div>
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div className="card max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Kid Count</h2>
-            <p className="text-gray-600 mb-4">
-              Update the number of children currently at the shelter. This is displayed on the sign-up page.
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="form-label">Minimum</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="form-input"
-                  value={settings.kidCountMin}
-                  onChange={(e) =>
-                    setSettings({ ...settings, kidCountMin: parseInt(e.target.value) || 0 })
-                  }
-                />
-              </div>
-              <div>
-                <label className="form-label">Maximum</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="form-input"
-                  value={settings.kidCountMax}
-                  onChange={(e) =>
-                    setSettings({ ...settings, kidCountMax: parseInt(e.target.value) || 0 })
-                  }
-                />
-              </div>
-            </div>
-
-            <button onClick={updateSettings} className="btn-primary">
-              Save Settings
-            </button>
           </div>
         )}
 

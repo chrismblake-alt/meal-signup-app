@@ -5,7 +5,7 @@ import { useState } from 'react'
 interface CalendarProps {
   selectedDate: Date | null
   onSelectDate: (date: Date) => void
-  bookedDates: string[]
+  bookedLocations: Record<string, string[]>
   blockedDates: string[]
   multiSelect?: boolean
   selectedDates?: Date[]
@@ -15,7 +15,7 @@ interface CalendarProps {
 export default function Calendar({
   selectedDate,
   onSelectDate,
-  bookedDates,
+  bookedLocations,
   blockedDates,
   multiSelect = false,
   selectedDates = [],
@@ -55,7 +55,14 @@ export default function Calendar({
 
   const getDateStr = (date: Date) => date.toISOString().split('T')[0]
 
-  const isBooked = (date: Date) => bookedDates.includes(getDateStr(date))
+  const getBookedCount = (date: Date) => {
+    const dateStr = getDateStr(date)
+    return bookedLocations[dateStr]?.length ?? 0
+  }
+
+  const isFullyBooked = (date: Date) => getBookedCount(date) >= 2
+
+  const isPartiallyBooked = (date: Date) => getBookedCount(date) === 1
 
   const isDateBlocked = (date: Date) => {
     return blockedDates.includes(getDateStr(date))
@@ -74,7 +81,7 @@ export default function Calendar({
 
   const handleDateClick = (day: number) => {
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-    if (!isDatePast(date) && !isDateBlocked(date) && !isBooked(date)) {
+    if (!isDatePast(date) && !isDateBlocked(date) && !isFullyBooked(date)) {
       if (multiSelect && onToggleDate) {
         onToggleDate(date)
       } else {
@@ -94,22 +101,26 @@ export default function Calendar({
       const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
       const isPast = isDatePast(date)
       const isBlocked = isDateBlocked(date)
-      const booked = isBooked(date)
+      const fullyBooked = isFullyBooked(date)
+      const partiallyBooked = isPartiallyBooked(date)
       const selected = isSelected(date)
-      const isUnavailable = isPast || isBlocked || booked
+      const isUnavailable = isPast || isBlocked || fullyBooked
 
       let className = 'calendar-day '
       if (selected) {
         className += multiSelect ? 'multi-selected ' : 'selected '
-      } else if (booked) {
+      } else if (fullyBooked) {
         className += 'booked '
+      } else if (partiallyBooked) {
+        className += 'partial '
       }
       if (isPast || isBlocked) {
         className += 'disabled '
       }
 
       let title = 'Available'
-      if (booked) title = 'Taken'
+      if (fullyBooked) title = 'Both locations taken'
+      else if (partiallyBooked) title = '1 location still available'
       else if (isBlocked) title = 'Not available'
       else if (isPast) title = 'Past date'
 
@@ -133,7 +144,7 @@ export default function Calendar({
     <div className="card">
       {multiSelect && (
         <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3">
-          Click on any available dates to select them. You can pick as many as you&apos;d like.
+          Click on any available dates to select them. You can pick as many as you&apos;d like. Locations are auto-assigned.
         </div>
       )}
 
@@ -179,8 +190,12 @@ export default function Calendar({
           <span>{multiSelect ? 'Your selections' : 'Your selection'}</span>
         </div>
         <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-[#f59e0b]" />
+          <span>1 spot left</span>
+        </div>
+        <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-[#fecaca]" />
-          <span>Taken</span>
+          <span>Fully taken</span>
         </div>
       </div>
     </div>

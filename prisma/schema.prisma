@@ -11,6 +11,7 @@ datasource db {
 model MealSignup {
   id           String   @id @default(cuid())
   date         DateTime
+  location     String   @default("Brick Building")
   name         String
   email        String
   phone        String
@@ -19,6 +20,7 @@ model MealSignup {
   cancelToken  String   @unique @default(cuid())
   reminderSent Boolean  @default(false)
   cancelled    Boolean  @default(false)
+  cancelledAt  DateTime?
   createdAt    DateTime @default(now())
 }
 
