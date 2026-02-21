@@ -108,7 +108,7 @@ export default function Home() {
             Provide a Meal for Children in Need
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Your home-cooked meal makes a difference. Sign up to provide dinner for the children staying at our shelter.
+            Whether home-cooked or restaurant-provided, your meal makes a difference. Sign up to provide dinner for the children staying at our shelter.
           </p>
         </div>
 
