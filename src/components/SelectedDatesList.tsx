@@ -1,19 +1,11 @@
 'use client'
 
-const LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
-
 interface SelectedDatesListProps {
   dates: Date[]
-  bookedLocations: Record<string, string[]>
   onRemoveDate: (date: Date) => void
 }
 
-function getAutoLocation(dateStr: string, bookedLocations: Record<string, string[]>): string {
-  const taken = bookedLocations[dateStr] || []
-  return LOCATIONS.find(l => !taken.includes(l)) || LOCATIONS[0]
-}
-
-export default function SelectedDatesList({ dates, bookedLocations, onRemoveDate }: SelectedDatesListProps) {
+export default function SelectedDatesList({ dates, onRemoveDate }: SelectedDatesListProps) {
   if (dates.length === 0) {
     return (
       <div className="card">
@@ -33,7 +25,6 @@ export default function SelectedDatesList({ dates, bookedLocations, onRemoveDate
       <div className="space-y-2 max-h-80 overflow-y-auto">
         {dates.map((date) => {
           const dateStr = date.toISOString().split('T')[0]
-          const location = getAutoLocation(dateStr, bookedLocations)
           const formatted = date.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
@@ -46,10 +37,7 @@ export default function SelectedDatesList({ dates, bookedLocations, onRemoveDate
               key={dateStr}
               className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
             >
-              <div>
-                <p className="font-medium text-sm">{formatted}</p>
-                <span className="text-xs text-gray-500">{location}</span>
-              </div>
+              <p className="font-medium text-sm">{formatted}</p>
               <button
                 onClick={() => onRemoveDate(date)}
                 className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full w-7 h-7 flex items-center justify-center transition"

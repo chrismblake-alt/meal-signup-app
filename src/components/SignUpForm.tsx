@@ -2,32 +2,21 @@
 
 import { useState } from 'react'
 
-const LOCATIONS = ['Brick Building', 'Yellow Farmhouse'] as const
-
 interface SignUpFormProps {
   selectedDate: Date | null
-  takenLocations: string[]
   onSuccess: () => void
   signupMode: 'single' | 'multi' | null
   onModeChange: (mode: 'single' | 'multi') => void
   selectedDates: Date[]
-  bookedLocations: Record<string, string[]>
   onMultiSuccess: (count: number) => void
-}
-
-function getAutoLocation(dateStr: string, bookedLocations: Record<string, string[]>): string {
-  const taken = bookedLocations[dateStr] || []
-  return LOCATIONS.find(l => !taken.includes(l)) || LOCATIONS[0]
 }
 
 export default function SignUpForm({
   selectedDate,
-  takenLocations,
   onSuccess,
   signupMode,
   onModeChange,
   selectedDates,
-  bookedLocations,
   onMultiSuccess,
 }: SignUpFormProps) {
   const [formData, setFormData] = useState({
@@ -35,23 +24,14 @@ export default function SignUpForm({
     email: '',
     phone: '',
     bringing: '',
-    mealValue: '',
     notes: '',
-    location: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const availableLocations = LOCATIONS.filter(l => !takenLocations.includes(l))
-
   const handleSingleSubmit = async () => {
     if (!selectedDate) {
       setError('Please select a date first')
-      return
-    }
-
-    if (!formData.location) {
-      setError('Please select a location')
       return
     }
 
@@ -75,7 +55,7 @@ export default function SignUpForm({
       }
 
       onSuccess()
-      setFormData({ name: '', email: '', phone: '', bringing: '', mealValue: '', notes: '', location: '' })
+      setFormData({ name: '', email: '', phone: '', bringing: '', notes: '' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -101,7 +81,6 @@ export default function SignUpForm({
           email: formData.email,
           phone: formData.phone,
           bringing: formData.bringing,
-          mealValue: formData.mealValue,
           notes: formData.notes,
           dates: selectedDates.map(d => d.toISOString()),
         }),
@@ -114,7 +93,7 @@ export default function SignUpForm({
       }
 
       onMultiSuccess(selectedDates.length)
-      setFormData({ name: '', email: '', phone: '', bringing: '', mealValue: '', notes: '', location: '' })
+      setFormData({ name: '', email: '', phone: '', bringing: '', notes: '' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -125,7 +104,7 @@ export default function SignUpForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.bringing || !formData.mealValue) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.bringing) {
       setError('Please fill in all required fields')
       return
     }
@@ -146,7 +125,7 @@ export default function SignUpForm({
       })
     : null
 
-  const contactInfoFilled = formData.name && formData.email && formData.phone && formData.bringing && formData.mealValue
+  const contactInfoFilled = formData.name && formData.email && formData.phone && formData.bringing
 
   return (
     <div className="card">
@@ -218,30 +197,6 @@ export default function SignUpForm({
         </div>
 
         <div>
-          <label htmlFor="mealValue" className="form-label">
-            Approximate Value of Meal *
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">$</span>
-            <input
-              type="number"
-              id="mealValue"
-              required
-              min="0"
-              step="0.01"
-              className="form-input"
-              style={{ paddingLeft: '2rem' }}
-              value={formData.mealValue}
-              onChange={(e) => setFormData({ ...formData, mealValue: e.target.value })}
-              placeholder="0.00"
-            />
-          </div>
-          <p className="text-sm text-gray-500 mt-1">
-            For your tax deduction records
-          </p>
-        </div>
-
-        <div>
           <label htmlFor="notes" className="form-label">
             Anything else we should know?
           </label>
@@ -269,7 +224,7 @@ export default function SignUpForm({
                 }`}
               >
                 <p className="font-semibold text-sm">Single Date</p>
-                <p className="text-xs text-gray-500 mt-1">Choose one date and location</p>
+                <p className="text-xs text-gray-500 mt-1">Choose one date</p>
               </button>
               <button
                 type="button"
@@ -287,7 +242,7 @@ export default function SignUpForm({
           </div>
         )}
 
-        {/* Single Date Mode - Date display and location selector */}
+        {/* Single Date Mode - Date display */}
         {signupMode === 'single' && (
           <>
             {selectedDate ? (
@@ -302,47 +257,15 @@ export default function SignUpForm({
             )}
 
             {selectedDate && (
-              <div>
-                <label className="form-label">Select Location *</label>
-                {availableLocations.length === 0 ? (
-                  <p className="text-red-600 text-sm">All locations are taken for this date.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {availableLocations.map(loc => (
-                      <label key={loc} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                        <input
-                          type="radio"
-                          name="location"
-                          value={loc}
-                          checked={formData.location === loc}
-                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          className="accent-[#e31837]"
-                        />
-                        <span className="font-medium">{loc}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                {takenLocations.length > 0 && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Already taken: {takenLocations.join(', ')}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Kid count info */}
-            {formData.location && (
               <div className="bg-[#fff3cd] border-2 border-[#e31837] rounded-lg p-4 text-center">
                 <p className="font-semibold text-gray-800">Please prepare meals for approximately</p>
                 <p className="text-3xl font-bold text-[#e31837] my-1">10 children</p>
-                <p className="text-sm text-gray-600">at the {formData.location}</p>
               </div>
             )}
 
             <button
               type="submit"
-              disabled={isSubmitting || !selectedDate || !formData.location}
+              disabled={isSubmitting || !selectedDate}
               className="btn-primary w-full"
             >
               {isSubmitting ? 'Signing Up...' : 'Sign Up for This Date'}
@@ -357,7 +280,7 @@ export default function SignUpForm({
               <div className="bg-[#fff3cd] border-2 border-[#e31837] rounded-lg p-4 text-center">
                 <p className="font-semibold text-gray-800">Please prepare meals for approximately</p>
                 <p className="text-3xl font-bold text-[#e31837] my-1">10 children</p>
-                <p className="text-sm text-gray-600">per delivery (locations auto-assigned)</p>
+                <p className="text-sm text-gray-600">per delivery</p>
               </div>
             )}
 

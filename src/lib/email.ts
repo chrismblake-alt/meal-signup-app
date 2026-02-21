@@ -103,15 +103,13 @@ interface BatchSignupDetails {
   name: string
   email: string
   bringing: string
-  mealValue: number
   signups: Array<{
     date: Date
-    location: string
     cancelToken: string
   }>
 }
 
-export function sendBatchConfirmationEmail({ name, email, bringing, mealValue, signups }: BatchSignupDetails) {
+export function sendBatchConfirmationEmail({ name, email, bringing, signups }: BatchSignupDetails) {
   const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').trim()
   const count = signups.length
 
@@ -128,7 +126,6 @@ export function sendBatchConfirmationEmail({ name, email, bringing, mealValue, s
       return `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">${formatted}</td>
-          <td style="padding: 10px; border-bottom: 1px solid #eee;">${s.location}</td>
           <td style="padding: 10px; border-bottom: 1px solid #eee;">
             <a href="${cancelUrl}" style="color: #e31837; text-decoration: underline; font-size: 13px;">Cancel</a>
           </td>
@@ -168,7 +165,6 @@ export function sendBatchConfirmationEmail({ name, email, bringing, mealValue, s
 
             <div class="highlight">
               <p><strong>Bringing:</strong> ${bringing}</p>
-              <p><strong>Your estimated donation value per meal:</strong> $${mealValue.toFixed(2)}</p>
             </div>
 
             <div class="highlight" style="padding: 0; overflow: hidden;">
@@ -176,7 +172,6 @@ export function sendBatchConfirmationEmail({ name, email, bringing, mealValue, s
                 <thead>
                   <tr style="background: #f3f4f6;">
                     <th style="padding: 10px; text-align: left;">Date</th>
-                    <th style="padding: 10px; text-align: left;">Location</th>
                     <th style="padding: 10px; text-align: left;"></th>
                   </tr>
                 </thead>
@@ -266,7 +261,7 @@ export function sendReminderEmail({ name, date, bringing, cancelToken }: SignupD
             </div>
 
             <p><strong>Delivery Time:</strong> 12:00 PM - 5:00 PM</p>
-            <p><strong>Location:</strong> 1 Salem Street, Cos Cob, CT 06807</p>
+            <p><strong>Address:</strong> 1 Salem Street, Cos Cob, CT 06807</p>
 
             <p>If you can no longer make it, please cancel as soon as possible so we can find a replacement:</p>
             <a href="${cancelUrl}" class="btn">Cancel My Sign-Up</a>

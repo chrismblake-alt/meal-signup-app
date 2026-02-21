@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
 
-const VALID_LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
-
 export async function GET() {
   try {
     const signups = await prisma.mealSignup.findMany({
@@ -21,14 +19,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, bringing, mealValue, notes, date, location } = body
+    const { name, email, phone, bringing, notes, date } = body
 
-    if (!name || !email || !phone || !bringing || !date || !location || !mealValue) {
+    if (!name || !email || !phone || !bringing || !date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    if (!VALID_LOCATIONS.includes(location)) {
-      return NextResponse.json({ error: 'Invalid location' }, { status: 400 })
     }
 
     const parsedDate = new Date(date)
@@ -53,20 +47,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This date is not available' }, { status: 400 })
     }
 
-    // Check if this date+location combo is already taken
+    // Check if this date is already taken
     const existingSignup = await prisma.mealSignup.findFirst({
       where: {
         date: {
           gte: startOfDay,
           lt: endOfDay,
         },
-        location,
         cancelled: false,
       },
     })
 
     if (existingSignup) {
-      return NextResponse.json({ error: `${location} is already taken for this date` }, { status: 400 })
+      return NextResponse.json({ error: 'This date is already taken' }, { status: 400 })
     }
 
     const signup = await prisma.mealSignup.create({
@@ -75,15 +68,13 @@ export async function POST(request: NextRequest) {
         email,
         phone,
         bringing,
-        mealValue: parseFloat(mealValue),
         notes: notes || null,
         date: new Date(date),
-        location,
       },
     })
 
     // Send confirmation email
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').trim()
     const cancelUrl = `${baseUrl}/cancel/${signup.cancelToken}`
     const formattedDate = new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -94,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: `Meal Sign-Up Confirmed - ${formattedDate} (${location})`,
+      subject: `Meal Sign-Up Confirmed - ${formattedDate}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -119,18 +110,15 @@ export async function POST(request: NextRequest) {
 
               <div class="highlight">
                 <p><strong>Date:</strong> ${formattedDate}</p>
-                <p><strong>Location:</strong> ${location}</p>
                 <p><strong>Bringing:</strong> ${bringing}</p>
-                <p><strong>Your estimated donation value:</strong> $${parseFloat(mealValue).toFixed(2)}</p>
               </div>
 
               <div style="background: #fff3cd; border: 2px solid #e31837; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
                 <p style="margin: 0; font-size: 16px; color: #333;"><strong>Please prepare meals for approximately</strong></p>
                 <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">10 children</p>
-                <p style="margin: 0; font-size: 14px; color: #666;">at the ${location}</p>
               </div>
 
-              <p>The kids and staff are looking forward to your meal! Please plan to deliver between 1:00 PM and 6:00 PM.</p>
+              <p>The kids and staff are looking forward to your meal! Please plan to deliver between 12:00 PM and 5:00 PM.</p>
 
               <ul style="margin: 10px 0; padding-left: 20px;">
                 <li>If you wish to drop off early in the day, please include reheating instructions.</li>

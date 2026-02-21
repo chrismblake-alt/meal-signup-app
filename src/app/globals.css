@@ -104,11 +104,6 @@ body {
   cursor: not-allowed;
 }
 
-.calendar-day.partial {
-  background-color: #fef3c7;
-  color: #d97706;
-}
-
 .calendar-day.booked {
   background-color: #fecaca;
   color: #dc2626;

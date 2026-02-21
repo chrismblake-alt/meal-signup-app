@@ -17,7 +17,6 @@ interface Story {
 interface Signup {
   id: string
   date: string
-  location: string
   cancelled: boolean
 }
 
@@ -89,19 +88,10 @@ export default function Home() {
     setSelectedDates([])
   }
 
-  // Build a map of dateStr -> taken location names
-  const bookedLocations: Record<string, string[]> = {}
-  for (const s of signups.filter((s) => !s.cancelled)) {
-    const dateStr = new Date(s.date).toISOString().split('T')[0]
-    if (!bookedLocations[dateStr]) bookedLocations[dateStr] = []
-    if (!bookedLocations[dateStr].includes(s.location)) {
-      bookedLocations[dateStr].push(s.location)
-    }
-  }
-
-  // Get taken locations for selected date (single mode)
-  const selectedDateStr = selectedDate ? selectedDate.toISOString().split('T')[0] : ''
-  const takenLocations = selectedDateStr ? (bookedLocations[selectedDateStr] || []) : []
+  // Build a list of booked date strings
+  const bookedDates: string[] = signups
+    .filter((s) => !s.cancelled)
+    .map((s) => new Date(s.date).toISOString().split('T')[0])
 
   return (
     <div className="py-8 px-4">
@@ -112,7 +102,7 @@ export default function Home() {
             Provide a Meal for Children in Need
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Your home-cooked meal makes a difference. Sign up to provide dinner for the children staying at one of our two shelters.
+            Your home-cooked meal makes a difference. Sign up to provide dinner for the children staying at our shelter.
           </p>
         </div>
 
@@ -149,12 +139,10 @@ export default function Home() {
                 <h2 className="text-xl font-semibold mb-4">1. Your Information</h2>
                 <SignUpForm
                   selectedDate={selectedDate}
-                  takenLocations={takenLocations}
                   onSuccess={handleSingleSuccess}
                   signupMode={signupMode}
                   onModeChange={handleModeChange}
                   selectedDates={selectedDates}
-                  bookedLocations={bookedLocations}
                   onMultiSuccess={handleMultiSuccess}
                 />
               </div>
@@ -167,7 +155,7 @@ export default function Home() {
                     <Calendar
                       selectedDate={selectedDate}
                       onSelectDate={setSelectedDate}
-                      bookedLocations={bookedLocations}
+                      bookedDates={bookedDates}
                       blockedDates={[]}
                     />
                   </>
@@ -179,7 +167,7 @@ export default function Home() {
                     <Calendar
                       selectedDate={null}
                       onSelectDate={() => {}}
-                      bookedLocations={bookedLocations}
+                      bookedDates={bookedDates}
                       blockedDates={[]}
                       multiSelect={true}
                       selectedDates={selectedDates}
@@ -188,7 +176,6 @@ export default function Home() {
                     <div className="mt-4">
                       <SelectedDatesList
                         dates={selectedDates}
-                        bookedLocations={bookedLocations}
                         onRemoveDate={handleToggleDate}
                       />
                     </div>

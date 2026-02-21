@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         day: 'numeric',
       })
 
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').trim()
       const cancelUrl = `${baseUrl}/cancel/${signup.cancelToken}`
 
       const emailResult = await sendEmail({
@@ -74,17 +74,15 @@ export async function POST(request: NextRequest) {
 
                 <div class="highlight">
                   <p><strong>Date:</strong> ${formattedDate}</p>
-                  <p><strong>Location:</strong> ${signup.location}</p>
                   <p><strong>Bringing:</strong> ${signup.bringing}</p>
                 </div>
 
                 <div style="background: #fff3cd; border: 2px solid #e31837; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
                   <p style="margin: 0; font-size: 16px; color: #333;"><strong>Please prepare meals for approximately</strong></p>
                   <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">10 children</p>
-                  <p style="margin: 0; font-size: 14px; color: #666;">at the ${signup.location}</p>
                 </div>
 
-                <p><strong>Delivery Time:</strong> 1:00 PM - 6:00 PM</p>
+                <p><strong>Delivery Time:</strong> 12:00 PM - 5:00 PM</p>
                 <p><strong>Address:</strong> 1 Salem Street, Cos Cob, CT 06807</p>
 
                 <ul style="margin: 10px 0; padding-left: 20px;">
