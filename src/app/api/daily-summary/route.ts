@@ -32,6 +32,14 @@ export async function GET(request: NextRequest) {
     const dayThree = new Date(dayAfterTomorrow)
     dayThree.setDate(dayThree.getDate() + 1)
 
+    // Fetch kid count from SiteSettings
+    const siteSettings = await prisma.siteSettings.findUnique({ where: { id: 'main' } })
+    const kidCountMin = siteSettings?.kidCountMin ?? 8
+    const kidCountMax = siteSettings?.kidCountMax ?? 12
+    const kidCountDisplay = kidCountMin === kidCountMax
+      ? `${kidCountMin}`
+      : `${kidCountMin}-${kidCountMax}`
+
     // --- PART 1: Send reminder emails to tomorrow's volunteers ---
 
     const tomorrowSignups = await prisma.mealSignup.findMany({
@@ -90,7 +98,7 @@ export async function GET(request: NextRequest) {
 
                 <div style="background: #fff3cd; border: 2px solid #e31837; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
                   <p style="margin: 0; font-size: 16px; color: #333;"><strong>Please prepare meals for approximately</strong></p>
-                  <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">10 children</p>
+                  <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">${kidCountDisplay} children</p>
                   <p style="margin: 0; font-size: 14px; color: #666;">at the ${signup.location}</p>
                 </div>
 
@@ -327,7 +335,7 @@ export async function GET(request: NextRequest) {
       </html>
     `
 
-    await sendEmail({
+    const summaryResult = await sendEmail({
       to: summaryRecipient,
       subject: `Daily Meal Summary - ${todayFormatted}`,
       html: summaryHtml,
@@ -335,6 +343,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      summaryEmailSent: summaryResult.success,
       remindersSent: reminderResults.filter(r => r.status === 'sent').length,
       remindersFailed: reminderResults.filter(r => r.status === 'failed').length,
       todayCount: todaySignups.length,

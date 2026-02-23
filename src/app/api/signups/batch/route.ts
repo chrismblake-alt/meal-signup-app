@@ -125,11 +125,20 @@ export async function POST(request: NextRequest) {
       )
     )
 
+    // Fetch kid count from SiteSettings
+    const siteSettings = await prisma.siteSettings.findUnique({ where: { id: 'main' } })
+    const kidCountMin = siteSettings?.kidCountMin ?? 8
+    const kidCountMax = siteSettings?.kidCountMax ?? 12
+    const kidCountDisplay = kidCountMin === kidCountMax
+      ? `${kidCountMin}`
+      : `${kidCountMin}-${kidCountMax}`
+
     // Send one batch confirmation email
     await sendBatchConfirmationEmail({
       name,
       email,
       bringing,
+      kidCountDisplay,
       signups: signups.map((s) => ({
         date: s.date,
         location: s.location,

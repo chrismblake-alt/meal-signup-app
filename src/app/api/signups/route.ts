@@ -81,6 +81,14 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Fetch kid count from SiteSettings
+    const siteSettings = await prisma.siteSettings.findUnique({ where: { id: 'main' } })
+    const kidCountMin = siteSettings?.kidCountMin ?? 8
+    const kidCountMax = siteSettings?.kidCountMax ?? 12
+    const kidCountDisplay = kidCountMin === kidCountMax
+      ? `${kidCountMin}`
+      : `${kidCountMin}-${kidCountMax}`
+
     // Send confirmation email
     const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').trim()
     const cancelUrl = `${baseUrl}/cancel/${signup.cancelToken}`
@@ -124,7 +132,7 @@ export async function POST(request: NextRequest) {
 
               <div style="background: #fff3cd; border: 2px solid #e31837; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
                 <p style="margin: 0; font-size: 16px; color: #333;"><strong>Please prepare meals for approximately</strong></p>
-                <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">10 children</p>
+                <p style="margin: 8px 0; font-size: 32px; font-weight: bold; color: #e31837;">${kidCountDisplay} children</p>
                 <p style="margin: 0; font-size: 14px; color: #666;">at the ${location}</p>
               </div>
 
