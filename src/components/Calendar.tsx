@@ -144,7 +144,7 @@ export default function Calendar({
     <div className="card">
       {multiSelect && (
         <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-3">
-          Click on any available dates to select them. You can pick as many as you&apos;d like. Locations are auto-assigned.
+          Click on any available dates to select them. You can pick as many as you&apos;d like.
         </div>
       )}
 

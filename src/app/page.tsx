@@ -28,6 +28,7 @@ export default function Home() {
   const [stories, setStories] = useState<Story[]>([])
   const [signups, setSignups] = useState<Signup[]>([])
   const [settings, setSettings] = useState({ kidCountMin: 8, kidCountMax: 12 })
+  const [multiLocation, setMultiLocation] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [successCount, setSuccessCount] = useState(0)
 
@@ -67,6 +68,7 @@ export default function Home() {
     setSuccessCount(count)
     setShowSuccess(true)
     setSelectedDates([])
+    setMultiLocation('')
     setSignupMode(null)
     refreshSignups()
   }
@@ -75,6 +77,7 @@ export default function Home() {
     setSignupMode(mode)
     setSelectedDate(null)
     setSelectedDates([])
+    setMultiLocation('')
   }
 
   const handleToggleDate = (date: Date) => {
@@ -111,6 +114,10 @@ export default function Home() {
   const takenLocations = selectedDate
     ? bookedLocations[selectedDate.toISOString().split('T')[0]] || []
     : []
+
+  const kidCountDisplay = settings.kidCountMin === settings.kidCountMax
+    ? `${settings.kidCountMin}`
+    : `${settings.kidCountMin}-${settings.kidCountMax}`
 
   return (
     <div className="py-8 px-4">
@@ -164,6 +171,9 @@ export default function Home() {
                   onModeChange={handleModeChange}
                   selectedDates={selectedDates}
                   onMultiSuccess={handleMultiSuccess}
+                  kidCountDisplay={kidCountDisplay}
+                  multiLocation={multiLocation}
+                  onMultiLocationChange={setMultiLocation}
                 />
               </div>
 
@@ -196,7 +206,7 @@ export default function Home() {
                     <div className="mt-4">
                       <SelectedDatesList
                         dates={selectedDates}
-                        bookedLocations={bookedLocations}
+                        location={multiLocation}
                         onRemoveDate={handleToggleDate}
                       />
                     </div>
@@ -233,7 +243,7 @@ export default function Home() {
                   <h3 className="font-medium text-green-700 mb-2">What to Bring</h3>
                   <ul className="space-y-1 text-gray-600">
                     <li className="flex items-start gap-2"><span className="text-green-600 font-bold mt-0.5">&#10003;</span> A protein, starch, and veggies and/or salad</li>
-                    <li className="flex items-start gap-2"><span className="text-green-600 font-bold mt-0.5">&#10003;</span> Plan for approximately 10 children</li>
+                    <li className="flex items-start gap-2"><span className="text-green-600 font-bold mt-0.5">&#10003;</span> Plan for approximately {kidCountDisplay} children</li>
                   </ul>
                   <h3 className="font-medium text-red-700 mt-4 mb-2">Please do NOT include</h3>
                   <ul className="space-y-1 text-gray-600">

@@ -8,10 +8,14 @@ const LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, bringing, notes, dates } = body
+    const { name, email, phone, bringing, notes, dates, location } = body
 
     if (!name || !email || !phone || !bringing) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (!location || !LOCATIONS.includes(location)) {
+      return NextResponse.json({ error: 'Please select a valid location' }, { status: 400 })
     }
 
     if (!Array.isArray(dates) || dates.length === 0) {
@@ -84,33 +88,29 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Auto-assign locations and check availability
-    const dateLocationPairs: Array<{ date: Date; location: string }> = []
-    const fullyBookedDates: string[] = []
+    // Check the chosen location is available for each date
+    const unavailableDates: string[] = []
 
     for (const date of parsedDates) {
       const dateStr = date.toISOString().split('T')[0]
       const taken = takenLocationsMap[dateStr] || []
-      const available = LOCATIONS.find((l) => !taken.includes(l))
-      if (!available) {
-        fullyBookedDates.push(
+      if (taken.includes(location)) {
+        unavailableDates.push(
           date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         )
-      } else {
-        dateLocationPairs.push({ date, location: available })
       }
     }
 
-    if (fullyBookedDates.length > 0) {
+    if (unavailableDates.length > 0) {
       return NextResponse.json(
-        { error: `Both locations are taken for: ${fullyBookedDates.join(', ')}` },
+        { error: `${location} is already taken for: ${unavailableDates.join(', ')}` },
         { status: 400 }
       )
     }
 
     // Create all signups in a transaction
     const signups = await prisma.$transaction(
-      dateLocationPairs.map(({ date, location }) =>
+      parsedDates.map((date) =>
         prisma.mealSignup.create({
           data: {
             name,

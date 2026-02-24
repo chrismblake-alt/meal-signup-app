@@ -12,6 +12,9 @@ interface SignUpFormProps {
   onModeChange: (mode: 'single' | 'multi') => void
   selectedDates: Date[]
   onMultiSuccess: (count: number) => void
+  kidCountDisplay: string
+  multiLocation: string
+  onMultiLocationChange: (location: string) => void
 }
 
 export default function SignUpForm({
@@ -22,6 +25,9 @@ export default function SignUpForm({
   onModeChange,
   selectedDates,
   onMultiSuccess,
+  kidCountDisplay,
+  multiLocation,
+  onMultiLocationChange,
 }: SignUpFormProps) {
   const [formData, setFormData] = useState({
     name: '',
@@ -81,6 +87,11 @@ export default function SignUpForm({
       return
     }
 
+    if (!multiLocation) {
+      setError('Please select a location')
+      return
+    }
+
     setIsSubmitting(true)
     setError('')
 
@@ -94,6 +105,7 @@ export default function SignUpForm({
           phone: formData.phone,
           bringing: formData.bringing,
           notes: formData.notes,
+          location: multiLocation,
           dates: selectedDates.map(d => d.toISOString()),
         }),
       })
@@ -248,7 +260,7 @@ export default function SignUpForm({
                 }`}
               >
                 <p className="font-semibold text-sm">Multiple Dates</p>
-                <p className="text-xs text-gray-500 mt-1">Pick several dates, locations auto-assigned</p>
+                <p className="text-xs text-gray-500 mt-1">Pick several dates at one location</p>
               </button>
             </div>
           </div>
@@ -301,7 +313,7 @@ export default function SignUpForm({
             {formData.location && (
               <div className="bg-[#fff3cd] border-2 border-[#e31837] rounded-lg p-4 text-center">
                 <p className="font-semibold text-gray-800">Please prepare meals for approximately</p>
-                <p className="text-3xl font-bold text-[#e31837] my-1">10 children</p>
+                <p className="text-3xl font-bold text-[#e31837] my-1">{kidCountDisplay} children</p>
                 <p className="text-sm text-gray-600">at the {formData.location}</p>
               </div>
             )}
@@ -316,14 +328,36 @@ export default function SignUpForm({
           </>
         )}
 
-        {/* Multi Date Mode - Submit button (calendar & date list rendered by parent) */}
+        {/* Multi Date Mode - Location picker & submit button (calendar & date list rendered by parent) */}
         {signupMode === 'multi' && (
           <>
-            {selectedDates.length > 0 && (
+            <div>
+              <label className="form-label">Select Location *</label>
+              <div className="space-y-2">
+                {LOCATIONS.map(loc => (
+                  <label key={loc} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                    <input
+                      type="radio"
+                      name="multi-location"
+                      value={loc}
+                      checked={multiLocation === loc}
+                      onChange={(e) => onMultiLocationChange(e.target.value)}
+                      className="accent-[#e31837]"
+                    />
+                    <span className="font-medium">{loc}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                All selected dates will be signed up at this location.
+              </p>
+            </div>
+
+            {multiLocation && selectedDates.length > 0 && (
               <div className="bg-[#fff3cd] border-2 border-[#e31837] rounded-lg p-4 text-center">
                 <p className="font-semibold text-gray-800">Please prepare meals for approximately</p>
-                <p className="text-3xl font-bold text-[#e31837] my-1">10 children</p>
-                <p className="text-sm text-gray-600">per delivery (locations auto-assigned)</p>
+                <p className="text-3xl font-bold text-[#e31837] my-1">{kidCountDisplay} children</p>
+                <p className="text-sm text-gray-600">per delivery at the {multiLocation}</p>
               </div>
             )}
 
@@ -335,7 +369,7 @@ export default function SignUpForm({
 
             <button
               type="submit"
-              disabled={isSubmitting || selectedDates.length === 0}
+              disabled={isSubmitting || selectedDates.length === 0 || !multiLocation}
               className="btn-primary w-full"
             >
               {isSubmitting
