@@ -114,6 +114,56 @@ export default function AdminDashboard() {
     }
   }
 
+  const changeLocation = async (id: string, location: string) => {
+    try {
+      const response = await fetch('/api/signups', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, location }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        if (data.error === 'Unauthorized') {
+          router.push('/admin/login')
+          return
+        }
+        throw new Error(data.error)
+      }
+
+      setSignups((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, location } : s))
+      )
+    } catch (error) {
+      console.error('Failed to change location:', error)
+      alert('Failed to change location')
+    }
+  }
+
+  const cancelSignup = async (id: string) => {
+    if (!confirm('Are you sure you want to cancel this sign-up?')) return
+
+    try {
+      const response = await fetch(`/api/signups?id=${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        if (data.error === 'Unauthorized') {
+          router.push('/admin/login')
+          return
+        }
+        throw new Error(data.error)
+      }
+
+      loadData()
+    } catch (error) {
+      console.error('Failed to cancel signup:', error)
+      alert('Failed to cancel sign-up')
+    }
+  }
+
   const exportCSV = () => {
     window.open('/api/export', '_blank')
   }
@@ -222,10 +272,21 @@ export default function AdminDashboard() {
                     <div className="grid md:grid-cols-2 gap-4">
                       {dateSignups.map((signup) => (
                         <div key={signup.id} className="card">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="inline-block bg-[#e31837]/10 text-[#e31837] text-xs font-semibold px-2 py-1 rounded">
-                              {signup.location}
-                            </span>
+                          <div className="flex items-center justify-between mb-2">
+                            <select
+                              value={signup.location}
+                              onChange={(e) => changeLocation(signup.id, e.target.value)}
+                              className="text-xs font-semibold px-2 py-1 rounded border border-[#e31837]/30 bg-[#e31837]/10 text-[#e31837] cursor-pointer"
+                            >
+                              <option value="Brick Building">Brick Building</option>
+                              <option value="Yellow Farmhouse">Yellow Farmhouse</option>
+                            </select>
+                            <button
+                              onClick={() => cancelSignup(signup.id)}
+                              className="text-red-500 hover:text-red-700 text-sm font-medium"
+                            >
+                              Cancel
+                            </button>
                           </div>
                           <p className="font-medium text-lg">{signup.name}</p>
                           <p className="text-gray-600">{signup.bringing}</p>

@@ -16,12 +16,58 @@ export async function GET() {
   }
 }
 
+const VALID_LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { id, location } = body
+
+    if (!id || !location) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    if (!VALID_LOCATIONS.includes(location)) {
+      return NextResponse.json({ error: 'Invalid location' }, { status: 400 })
+    }
+
+    const signup = await prisma.mealSignup.update({
+      where: { id },
+      data: { location },
+    })
+
+    return NextResponse.json({ success: true, signup })
+  } catch (error) {
+    console.error('Error updating signup:', error)
+    return NextResponse.json({ error: 'Failed to update signup' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Missing signup ID' }, { status: 400 })
+    }
+
+    await prisma.mealSignup.update({
+      where: { id },
+      data: { cancelled: true, cancelledAt: new Date() },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error cancelling signup:', error)
+    return NextResponse.json({ error: 'Failed to cancel signup' }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, email, phone, bringing, notes, date, location } = body
-
-    const VALID_LOCATIONS = ['Brick Building', 'Yellow Farmhouse']
 
     if (!name || !email || !phone || !bringing || !date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
