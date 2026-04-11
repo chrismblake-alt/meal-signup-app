@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const summaryRecipient = process.env.DAILY_SUMMARY_EMAIL || 'dinnerdonations@kidsincrisis.org, cblake@kidsincrisis.org'
+    const summaryRecipient = process.env.STAFF_EMAILS
+      || process.env.DAILY_SUMMARY_EMAIL
+      || 'dinnerdonations@kidsincrisis.org, cblake@kidsincrisis.org'
     const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000').trim()
 
     // Calculate date boundaries in EST (UTC-5)
