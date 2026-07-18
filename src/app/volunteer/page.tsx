@@ -17,28 +17,28 @@ const INTEREST_GROUPS = [
   {
     heading: 'Direct Impact',
     items: [
-      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'cook a meal for our residents at home or at the shelter' },
-      { value: 'Outdoor Fun', label: 'Outdoor Fun', description: 'host a BBQ or games when the weather warms up' },
-      { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'gather sports gear for kids and teens' },
-      { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'pack craft supplies for children and teens' },
-      { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'assemble baskets of necessities for special occasions' },
-      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'sponsor an excursion like bowling, pottery, or a museum', note: '(requires additional screening)' },
+      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'Cook a hearty meal for 10 of our residents at your house, or come to the shelter and cook with the residents. Perfect for families and groups.' },
+      { value: 'Outdoor Fun', label: 'Outdoor Fun', description: 'When the weather warms up, host a BBQ or a game of volleyball!' },
+      { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'Gather sports gear in a bag for kids to enjoy (teen sizes are super helpful).' },
+      { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'Pack a box with craft supplies for 10 lucky children and teens.' },
+      { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'Assemble a basket of necessities for shelter residents to celebrate special occasions.' },
+      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an excursion out of the shelter — a bowling alley, pottery studio, or museum. (requires additional screening)' },
     ],
   },
   {
     heading: 'Engage the Kids',
     note: 'Roles involving direct work with our children — including Lighthouse, SafeTalk, and activities with residents — require additional screening, training, and a regular time commitment. Our Volunteer Manager will walk you through those steps.',
     items: [
-      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'help lead weekly meetings for teens and their allies' },
-      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'help teach K–5 kids about staying safe' },
+      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Help lead weekly meetings where teens and their allies gather in a welcoming, inclusive, safe space.' },
+      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help trained staff teach K–5 kids in local schools how to recognize and respond to unsafe situations.' },
     ],
   },
   {
     heading: 'Support Our Mission',
     items: [
-      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'join an event committee or represent us at community events' },
-      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'gather essentials or sponsor a holiday wish' },
-      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'organizing, painting, gardening, or group project days' },
+      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'Join an event committee for our fundraising events, or represent us out in the community.' },
+      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'Help gather essentials like food, clothing and toiletries, or sponsor a child\u2019s holiday wish list.' },
+      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'Organizing, painting, gardening, or group project days while the kids are at school.' },
     ],
   },
 ] as const
@@ -271,9 +271,6 @@ export default function VolunteerPage() {
                             <span className="text-sm">
                               <span className="font-medium">{item.label}</span>
                               <span className="text-gray-600"> &mdash; {item.description}</span>
-                              {'note' in item && item.note && (
-                                <span className="block text-xs text-gray-500 italic mt-0.5">{item.note}</span>
-                              )}
                             </span>
                           </label>
                         ))}
