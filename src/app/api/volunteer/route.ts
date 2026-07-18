@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
+import { getSession } from '@/lib/auth'
+
+export async function GET() {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const submissions = await prisma.volunteerInterest.findMany({
+      orderBy: { submittedAt: 'desc' },
+    })
+
+    return NextResponse.json(submissions)
+  } catch (error) {
+    console.error('Error fetching volunteer submissions:', error)
+    return NextResponse.json({ error: 'Failed to fetch submissions' }, { status: 500 })
+  }
+}
 
 const NOTIFICATION_RECIPIENTS = [
   'jfebles@kidsincrisis.org',

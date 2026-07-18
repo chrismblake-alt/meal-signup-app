@@ -24,11 +24,28 @@ interface Story {
   active: boolean
 }
 
+interface Volunteer {
+  id: string
+  name: string
+  email: string
+  phone: string
+  townCity: string
+  signupType: string
+  groupName: string | null
+  interests: string[]
+  otherInterest: string | null
+  availability: string | null
+  hearAbout: string | null
+  additionalInfo: string | null
+  submittedAt: string
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [signups, setSignups] = useState<Signup[]>([])
   const [stories, setStories] = useState<Story[]>([])
-  const [activeTab, setActiveTab] = useState<'signups' | 'stories'>('signups')
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([])
+  const [activeTab, setActiveTab] = useState<'signups' | 'stories' | 'volunteers'>('signups')
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -41,16 +58,19 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [signupsRes, storiesRes] = await Promise.all([
+      const [signupsRes, storiesRes, volunteersRes] = await Promise.all([
         fetch('/api/signups'),
         fetch('/api/stories'),
+        fetch('/api/volunteer'),
       ])
 
       const signupsData = await signupsRes.json()
       const storiesData = await storiesRes.json()
+      const volunteersData = await volunteersRes.json()
 
       setSignups(Array.isArray(signupsData) ? signupsData : [])
       setStories(Array.isArray(storiesData) ? storiesData : [])
+      setVolunteers(Array.isArray(volunteersData) ? volunteersData : [])
     } catch (error) {
       console.error('Failed to load data:', error)
     } finally {
@@ -258,6 +278,16 @@ export default function AdminDashboard() {
           >
             Impact Stories
           </button>
+          <button
+            onClick={() => setActiveTab('volunteers')}
+            className={`pb-3 px-1 font-medium transition ${
+              activeTab === 'volunteers'
+                ? 'text-[#e31837] border-b-2 border-[#e31837]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Volunteer Interest
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -404,6 +434,101 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'volunteers' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Volunteer Interest</h2>
+              <p className="text-sm text-gray-500">{volunteers.length} submission{volunteers.length === 1 ? '' : 's'}</p>
+            </div>
+
+            {volunteers.length === 0 ? (
+              <div className="card text-center text-gray-500 py-8">
+                No volunteer submissions yet
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {volunteers.map((v) => {
+                  const submitted = new Date(v.submittedAt).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })
+                  return (
+                    <div key={v.id} className="card">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                        <p className="font-semibold text-lg">{v.name}</p>
+                        <p className="text-xs text-gray-500">{submitted}</p>
+                      </div>
+
+                      <dl className="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-y-2 gap-x-3 text-sm">
+                        <dt className="font-medium text-gray-600">Email</dt>
+                        <dd className="text-gray-800 break-all">
+                          <a href={`mailto:${v.email}`} className="text-[#e31837] underline">{v.email}</a>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Phone</dt>
+                        <dd className="text-gray-800">
+                          <a href={`tel:${v.phone}`} className="text-[#e31837] underline">{v.phone}</a>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Town / City</dt>
+                        <dd className="text-gray-800">{v.townCity}</dd>
+
+                        <dt className="font-medium text-gray-600">Signing up as</dt>
+                        <dd className="text-gray-800">
+                          {v.signupType}
+                          {v.groupName && <span className="text-gray-600"> &mdash; {v.groupName}</span>}
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Interests</dt>
+                        <dd className="text-gray-800">
+                          {v.interests.length === 0 ? (
+                            <span className="text-gray-400 italic">(none selected)</span>
+                          ) : (
+                            <ul className="list-disc pl-5 space-y-0.5">
+                              {v.interests.map((i) => (
+                                <li key={i}>
+                                  {i}
+                                  {i === 'Other' && v.otherInterest && (
+                                    <span className="text-gray-600">: {v.otherInterest}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </dd>
+
+                        {v.availability && (
+                          <>
+                            <dt className="font-medium text-gray-600">Availability</dt>
+                            <dd className="text-gray-800 whitespace-pre-wrap">{v.availability}</dd>
+                          </>
+                        )}
+
+                        {v.hearAbout && (
+                          <>
+                            <dt className="font-medium text-gray-600">Heard about us</dt>
+                            <dd className="text-gray-800 whitespace-pre-wrap">{v.hearAbout}</dd>
+                          </>
+                        )}
+
+                        {v.additionalInfo && (
+                          <>
+                            <dt className="font-medium text-gray-600">Notes</dt>
+                            <dd className="text-gray-800 whitespace-pre-wrap">{v.additionalInfo}</dd>
+                          </>
+                        )}
+                      </dl>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
