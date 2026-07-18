@@ -22,7 +22,6 @@ const INTEREST_GROUPS = [
       { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'Gather sports gear in a bag for kids to enjoy (teen sizes are super helpful).' },
       { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'Pack a box with craft supplies for 10 lucky children and teens.' },
       { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'Assemble a basket of necessities for shelter residents to celebrate special occasions.' },
-      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an excursion out of the shelter — a bowling alley, pottery studio, or museum. (requires additional screening)' },
     ],
   },
   {
@@ -31,6 +30,7 @@ const INTEREST_GROUPS = [
     items: [
       { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Help lead weekly meetings where teens and their allies gather in a welcoming, inclusive, safe space.' },
       { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help trained staff teach K–5 kids in local schools how to recognize and respond to unsafe situations.' },
+      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an excursion out of the shelter — a bowling alley, pottery studio, or museum.' },
     ],
   },
   {
