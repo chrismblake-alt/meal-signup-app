@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import HeaderTitle from "@/components/HeaderTitle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +37,7 @@ export default function RootLayout({
                 className="h-12 w-auto"
               />
               <div>
-                <p className="text-sm text-gray-500">Meal Sign-Up</p>
+                <HeaderTitle />
               </div>
             </a>
             <div className="text-right hidden sm:block">

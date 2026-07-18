@@ -1,0 +1,367 @@
+'use client'
+
+import { useState } from 'react'
+import PhotoCarousel, { type PhotoItem } from '@/components/PhotoCarousel'
+
+const VOLUNTEER_PHOTOS: PhotoItem[] = [
+  { src: '/photos/volunteer1.jpg' },
+  { src: '/photos/volunteer2.jpg', objectPosition: 'center top' },
+  { src: '/photos/volunteer3.jpg', objectPosition: 'center 40%' },
+  { src: '/photos/volunteer4.jpg', objectPosition: 'center 35%' },
+  { src: '/photos/volunteer5.jpg', objectPosition: 'center 30%' },
+]
+
+const THANK_YOU_PHOTO = '/photos/volunteer3.jpg'
+
+const INTEREST_GROUPS = [
+  {
+    heading: 'Direct Impact',
+    items: [
+      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'cook a meal for our residents at home or at the shelter' },
+      { value: 'Outdoor Fun', label: 'Outdoor Fun', description: 'host a BBQ or games when the weather warms up' },
+      { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'gather sports gear for kids and teens' },
+      { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'pack craft supplies for children and teens' },
+      { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'assemble baskets of necessities for special occasions' },
+      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'sponsor an excursion like bowling, pottery, or a museum', note: '(requires additional screening)' },
+    ],
+  },
+  {
+    heading: 'Engage the Kids',
+    note: 'Roles involving direct work with our children — including Lighthouse, SafeTalk, and activities with residents — require additional screening, training, and a regular time commitment. Our Volunteer Manager will walk you through those steps.',
+    items: [
+      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'help lead weekly meetings for teens and their allies' },
+      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'help teach K–5 kids about staying safe' },
+    ],
+  },
+  {
+    heading: 'Support Our Mission',
+    items: [
+      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'join an event committee or represent us at community events' },
+      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'gather essentials or sponsor a holiday wish' },
+      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'organizing, painting, gardening, or group project days' },
+    ],
+  },
+] as const
+
+const OTHER_INTEREST = 'Other'
+
+export default function VolunteerPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    townCity: '',
+    signupType: '',
+    groupName: '',
+    interests: [] as string[],
+    otherInterest: '',
+    availability: '',
+    hearAbout: '',
+    additionalInfo: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  const toggleInterest = (value: string) => {
+    setFormData((prev) => {
+      const has = prev.interests.includes(value)
+      return {
+        ...prev,
+        interests: has ? prev.interests.filter((v) => v !== value) : [...prev.interests, value],
+        otherInterest: value === OTHER_INTEREST && has ? '' : prev.otherInterest,
+      }
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+
+    if (!formData.name || !formData.email || !formData.phone || !formData.townCity) {
+      setError('Please fill in all required fields')
+      return
+    }
+
+    if (!formData.signupType) {
+      setError('Please tell us if you are signing up as an individual or a group')
+      return
+    }
+
+    if (formData.signupType === 'Group' && !formData.groupName.trim()) {
+      setError('Please tell us the name of your group')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/volunteer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          groupName: formData.signupType === 'Group' ? formData.groupName.trim() : null,
+          otherInterest: formData.interests.includes(OTHER_INTEREST) ? formData.otherInterest.trim() : null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong')
+      }
+
+      setShowSuccess(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const showOtherBox = formData.interests.includes(OTHER_INTEREST)
+  const showGroupName = formData.signupType === 'Group'
+
+  return (
+    <div className="py-8 px-4">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            Join Our Volunteer Family
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Every little bit of your time can create big ripples of change in the lives of children and teens in need. Tell us a bit about yourself and our volunteer team will be in touch.
+          </p>
+        </div>
+
+        {showSuccess ? (
+          <>
+            <div className="mb-8 rounded-2xl overflow-hidden shadow-lg aspect-[4/3] md:aspect-[21/9]">
+              <img
+                src={THANK_YOU_PHOTO}
+                alt=""
+                className="w-full h-full object-cover"
+                style={{ objectPosition: 'center 40%' }}
+              />
+            </div>
+            <div className="mb-8 bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+              <div className="text-green-600 text-5xl mb-4">&#10003;</div>
+              <h2 className="text-xl font-semibold text-green-800 mb-2">Thank You!</h2>
+              <p className="text-green-700">
+                Jennifer Febles, our Manager of Early Childhood Support Programs &amp; Volunteers, will be in touch soon.
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+          <div className="mb-8">
+            <PhotoCarousel photos={VOLUNTEER_PHOTOS} alt="Kids In Crisis volunteers" />
+          </div>
+          <div className="card">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="form-label">Full Name *</label>
+                <input
+                  type="text"
+                  id="name"
+                  required
+                  className="form-input"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="form-label">Email Address *</label>
+                <input
+                  type="email"
+                  id="email"
+                  required
+                  className="form-input"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="form-label">Phone Number *</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  required
+                  className="form-input"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="townCity" className="form-label">Town / City *</label>
+                <input
+                  type="text"
+                  id="townCity"
+                  required
+                  className="form-input"
+                  value={formData.townCity}
+                  onChange={(e) => setFormData({ ...formData, townCity: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Are you signing up as an individual or with a group? *</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(['Individual', 'Group'] as const).map((opt) => (
+                    <label
+                      key={opt}
+                      className={`p-3 rounded-lg border-2 text-center cursor-pointer transition ${
+                        formData.signupType === opt
+                          ? 'border-[#e31837] bg-[#e31837]/5'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="signupType"
+                        value={opt}
+                        checked={formData.signupType === opt}
+                        onChange={(e) => setFormData({ ...formData, signupType: e.target.value })}
+                        className="sr-only"
+                      />
+                      <span className="font-semibold text-sm">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+                {showGroupName && (
+                  <div className="mt-3">
+                    <label htmlFor="groupName" className="form-label">Group Name *</label>
+                    <input
+                      type="text"
+                      id="groupName"
+                      className="form-input"
+                      value={formData.groupName}
+                      onChange={(e) => setFormData({ ...formData, groupName: e.target.value })}
+                      placeholder="Company, church, school, etc."
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="form-label">What type of volunteering interests you? Check all that apply</label>
+                <div className="space-y-6">
+                  {INTEREST_GROUPS.map((group) => (
+                    <div key={group.heading}>
+                      <p className="font-bold text-gray-800 mb-1">{group.heading}</p>
+                      {'note' in group && group.note && (
+                        <p className="text-xs text-gray-500 italic mb-2">{group.note}</p>
+                      )}
+                      <div className="space-y-2">
+                        {group.items.map((item) => (
+                          <label
+                            key={item.value}
+                            className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.interests.includes(item.value)}
+                              onChange={() => toggleInterest(item.value)}
+                              className="accent-[#e31837] mt-1"
+                            />
+                            <span className="text-sm">
+                              <span className="font-medium">{item.label}</span>
+                              <span className="text-gray-600"> &mdash; {item.description}</span>
+                              {'note' in item && item.note && (
+                                <span className="block text-xs text-gray-500 italic mt-0.5">{item.note}</span>
+                              )}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div>
+                    <p className="font-bold text-gray-800 mb-2">Something else</p>
+                    <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                      <input
+                        type="checkbox"
+                        checked={formData.interests.includes(OTHER_INTEREST)}
+                        onChange={() => toggleInterest(OTHER_INTEREST)}
+                        className="accent-[#e31837] mt-1"
+                      />
+                      <span className="text-sm font-medium">Other</span>
+                    </label>
+                    {showOtherBox && (
+                      <input
+                        type="text"
+                        className="form-input mt-3"
+                        value={formData.otherInterest}
+                        onChange={(e) => setFormData({ ...formData, otherInterest: e.target.value })}
+                        placeholder="Tell us what you have in mind"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="availability" className="form-label">
+                  What days and times are you generally available?
+                </label>
+                <textarea
+                  id="availability"
+                  rows={2}
+                  className="form-input"
+                  value={formData.availability}
+                  onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="hearAbout" className="form-label">
+                  How did you hear about Kids In Crisis?
+                </label>
+                <textarea
+                  id="hearAbout"
+                  rows={2}
+                  className="form-input"
+                  value={formData.hearAbout}
+                  onChange={(e) => setFormData({ ...formData, hearAbout: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="additionalInfo" className="form-label">
+                  Anything else you&rsquo;d like us to know?
+                </label>
+                <textarea
+                  id="additionalInfo"
+                  rows={3}
+                  className="form-input"
+                  value={formData.additionalInfo}
+                  onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-primary w-full"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </button>
+            </form>
+          </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

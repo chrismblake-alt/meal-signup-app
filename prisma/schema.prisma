@@ -50,3 +50,19 @@ model BlockedDate {
   id   String   @id @default(cuid())
   date DateTime @unique
 }
+
+model VolunteerInterest {
+  id             String   @id @default(cuid())
+  name           String
+  email          String
+  phone          String
+  townCity       String
+  signupType     String
+  groupName      String?
+  interests      String[]
+  otherInterest  String?
+  availability   String?
+  hearAbout      String?
+  additionalInfo String?
+  submittedAt    DateTime @default(now())
+}
