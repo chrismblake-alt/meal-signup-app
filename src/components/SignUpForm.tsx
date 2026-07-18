@@ -128,7 +128,7 @@ export default function SignUpForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.phone || !formData.bringing) {
+    if (!formData.name || !formData.email || !formData.phone) {
       setError('Please fill in all required fields')
       return
     }
@@ -149,7 +149,7 @@ export default function SignUpForm({
       })
     : null
 
-  const contactInfoFilled = formData.name && formData.email && formData.phone && formData.bringing
+  const contactInfoFilled = formData.name && formData.email && formData.phone
 
   return (
     <div className="card">
@@ -204,12 +204,11 @@ export default function SignUpForm({
 
         <div>
           <label htmlFor="bringing" className="form-label">
-            What are you bringing? *
+            What are you bringing?
           </label>
           <input
             type="text"
             id="bringing"
-            required
             className="form-input"
             value={formData.bringing}
             onChange={(e) => setFormData({ ...formData, bringing: e.target.value })}
