@@ -30,6 +30,7 @@ export default function AdminDashboard() {
   const [stories, setStories] = useState<Story[]>([])
   const [activeTab, setActiveTab] = useState<'signups' | 'stories'>('signups')
   const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // New story form
   const [newStory, setNewStory] = useState({ title: '', content: '', imageUrl: '' })
@@ -172,9 +173,18 @@ export default function AdminDashboard() {
     .filter((s) => !s.cancelled && new Date(s.date) >= new Date())
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const filteredSignups = normalizedQuery
+    ? upcomingSignups.filter(
+        (s) =>
+          s.name.toLowerCase().includes(normalizedQuery) ||
+          s.email.toLowerCase().includes(normalizedQuery)
+      )
+    : upcomingSignups
+
   // Group upcoming signups by date
   const signupsByDate: Record<string, Signup[]> = {}
-  for (const signup of upcomingSignups) {
+  for (const signup of filteredSignups) {
     const dateStr = new Date(signup.date).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -260,9 +270,23 @@ export default function AdminDashboard() {
               </button>
             </div>
 
+            <div className="mb-4">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name or email…"
+                className="form-input"
+              />
+            </div>
+
             {upcomingSignups.length === 0 ? (
               <div className="card text-center text-gray-500 py-8">
                 No upcoming meals scheduled
+              </div>
+            ) : filteredSignups.length === 0 ? (
+              <div className="card text-center text-gray-500 py-8">
+                No sign-ups match &ldquo;{searchQuery}&rdquo;
               </div>
             ) : (
               <div className="space-y-6">
