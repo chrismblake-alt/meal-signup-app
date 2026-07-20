@@ -15,30 +15,77 @@ const THANK_YOU_PHOTO = '/photos/volunteer3.jpg'
 
 const INTEREST_GROUPS = [
   {
-    heading: 'Direct Impact',
+    heading: 'Tier 1 — Support Our Mission',
+    note: 'Help power everything we do — no shelter visits required. We’ll set up a meeting with someone from our Development Team to see where you’ll be a great fit.',
     items: [
-      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'Cook a hearty meal for 10 of our residents at your house, or come to the shelter and cook with the residents. Perfect for families and groups.' },
-      { value: 'Outdoor Fun', label: 'Outdoor Fun', description: 'When the weather warms up, host a BBQ or a game of volleyball!' },
-      { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'Gather sports gear in a bag for kids to enjoy (teen sizes are super helpful).' },
-      { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'Pack a box with craft supplies for 10 lucky children and teens.' },
-      { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'Assemble a basket of necessities for shelter residents to celebrate special occasions.' },
+      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'Join an event committee for our fundraising events, or represent us out in the community.' },
+      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'Help gather essentials like food, clothing and toiletries, or sponsor a child’s holiday wish list.' },
+      { value: 'Event Volunteers', label: 'Event Volunteers', description: 'Lend a hand at our fundraising and community events.' },
     ],
   },
   {
-    heading: 'Engage the Kids',
-    note: 'Roles involving direct work with our children — including Lighthouse, SafeTalk, and activities with residents — require additional screening, training, and a regular time commitment. Our Volunteer Manager will walk you through those steps.',
+    heading: 'Tier 2 — Make a Direct Impact',
+    note: 'Directly brighten our kids’ days — prepared at home and dropped off, no direct interaction with the children. Someone from our Volunteer Team will meet with you to find the best fit and arrange drop-offs.',
     items: [
-      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Help lead weekly meetings where teens and their allies gather in a welcoming, inclusive, safe space.' },
-      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help trained staff teach K–5 kids in local schools how to recognize and respond to unsafe situations.' },
+      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'Cook a hearty meal for 10 of our residents at your house and drop it off. Perfect for families and groups.' },
+      { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'Gather sports gear in a bag for kids to enjoy (teen sizes are super helpful).' },
+      { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'Pack a box with craft supplies for 10 lucky children and teens.' },
+      { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'Assemble a basket of necessities for shelter residents to celebrate special occasions.' },
+      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'Organizing, painting, gardening, or group project days while the kids are at school.' },
+    ],
+  },
+  {
+    heading: 'Tier 3 — Engage with the Kids',
+    note: 'This one is so fulfilling! Because these roles involve engaging with our kids — even under staff supervision — we’re required to vet these volunteers more carefully.',
+    items: [
+      { value: 'Cook a Meal with our Kids', label: 'Cook a Meal with our Kids', description: 'Come to the shelter and cook dinner alongside our residents.' },
+      { value: 'Garden with our Kids', label: 'Garden with our Kids', description: 'Dig in the dirt and garden side by side with our kids.' },
+      { value: 'Help our Kids with Homework', label: 'Help our Kids with Homework', description: 'Support our kids and teens with homework and schoolwork.' },
+      { value: 'Outdoor Fun with our Kids', label: 'Outdoor Fun with our Kids', description: 'When the weather warms up, host a BBQ or a game of volleyball!' },
       { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an excursion out of the shelter — a bowling alley, pottery studio, or museum.' },
     ],
   },
   {
-    heading: 'Support Our Mission',
+    heading: 'Tier 4 — Lead Our Programs',
+    note: 'Our highest level of volunteering — leading programs where you may work with kids with less direct supervision. These roles require our most thorough vetting.',
     items: [
-      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'Join an event committee for our fundraising events, or represent us out in the community.' },
-      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'Help gather essentials like food, clothing and toiletries, or sponsor a child\u2019s holiday wish list.' },
-      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'Organizing, painting, gardening, or group project days while the kids are at school.' },
+      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Help lead weekly meetings where teens and their allies gather in a welcoming, inclusive, safe space.' },
+      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help trained staff teach K–5 kids in local schools how to recognize and respond to unsafe situations.' },
+    ],
+  },
+] as const
+
+const TIER_REQUIREMENTS = [
+  {
+    heading: 'Tier 1 — Support Our Mission',
+    requirements: [
+      'Meet with and be approved by someone from the KIC Development Team',
+    ],
+  },
+  {
+    heading: 'Tier 2 — Make a Direct Impact',
+    requirements: [
+      'Meet with and be approved by someone from the KIC Volunteer Team',
+    ],
+  },
+  {
+    heading: 'Tier 3 — Engage with the Kids',
+    requirements: [
+      'Meet with and be approved by someone from the KIC Volunteer Team',
+      'Completed application form',
+      'References',
+      'Conduct standards agreement',
+      'Confidentiality agreement',
+      'Training session',
+    ],
+  },
+  {
+    heading: 'Tier 4 — Lead Our Programs',
+    requirements: [
+      'Everything in Tier 3',
+      'Background checks (DCF CPS + CT criminal history)',
+      'Mandated reporter acknowledgment',
+      'Self-attestation of general good health',
     ],
   },
 ] as const
@@ -299,6 +346,28 @@ export default function VolunteerPage() {
                       />
                     )}
                   </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="font-semibold text-gray-700 mb-3">What each tier involves</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {TIER_REQUIREMENTS.map((tier) => (
+                    <div
+                      key={tier.heading}
+                      className="bg-white border border-gray-200 rounded-xl shadow-sm p-4"
+                    >
+                      <p className="font-bold text-gray-800 mb-2">{tier.heading}</p>
+                      <ul className="space-y-1.5 text-sm text-gray-600">
+                        {tier.requirements.map((req) => (
+                          <li key={req} className="flex items-start gap-2">
+                            <span className="text-[#e31837] mt-0.5" aria-hidden="true">&#10003;</span>
+                            <span>{req}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
               </div>
 
