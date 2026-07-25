@@ -58,6 +58,7 @@ const INTEREST_GROUPS = [
     items: [
       { value: 'Cook a Meal with our Kids', label: 'Cook a Meal with our Kids', description: 'Cook dinner at the shelter with our residents.' },
       { value: 'Garden with our Kids', label: 'Garden with our Kids', description: 'Garden side by side with our kids.' },
+      { value: 'Share Your Arts with our Kids', label: 'Share Your Arts with our Kids', description: 'Bring your love of art, music, or dance to the kids after school — weekly visits are gold.' },
       { value: 'Help our Kids with Homework', label: 'Help our Kids with Homework', description: 'Homework help for our kids and teens.' },
       { value: 'Outdoor Fun with our Kids', label: 'Outdoor Fun with our Kids', description: 'Host a BBQ or backyard games.' },
       { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an outing — bowling, pottery, a museum.' },
