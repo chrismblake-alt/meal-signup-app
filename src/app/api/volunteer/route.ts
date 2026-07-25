@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
 import { getSession } from '@/lib/auth'
+import { HOLIDAY_CENTRAL_VALUES } from '@/lib/holidayCentral'
 
 export async function GET() {
   try {
@@ -58,9 +59,6 @@ export async function POST(request: NextRequest) {
       groupName,
       interests,
       otherInterest,
-      availability,
-      hearAbout,
-      additionalInfo,
     } = body
 
     if (!name || !email || !phone || !townCity) {
@@ -87,17 +85,25 @@ export async function POST(request: NextRequest) {
         groupName: signupType === 'Group' ? String(groupName).trim() : null,
         interests: interestsArray,
         otherInterest: otherInterest ? String(otherInterest).trim() : null,
-        availability: availability || null,
-        hearAbout: hearAbout || null,
-        additionalInfo: additionalInfo || null,
       },
     })
 
-    const interestsList = interestsArray.length > 0
-      ? `<ul style="margin: 0; padding-left: 20px;">${interestsArray
+    // Holiday Central selections are stored in the same interests array; split
+    // them out so the email labels them separately.
+    const holidayInterests = interestsArray.filter((i) => HOLIDAY_CENTRAL_VALUES.includes(i))
+    const generalInterests = interestsArray.filter((i) => !HOLIDAY_CENTRAL_VALUES.includes(i))
+
+    const interestsList = generalInterests.length > 0
+      ? `<ul style="margin: 0; padding-left: 20px;">${generalInterests
           .map((i) => `<li>${escapeHtml(i)}${i === 'Other' && submission.otherInterest ? `: ${escapeHtml(submission.otherInterest)}` : ''}</li>`)
           .join('')}</ul>`
       : '<em style="color:#888;">(none selected)</em>'
+
+    const holidayList = holidayInterests.length > 0
+      ? `<ul style="margin: 0; padding-left: 20px;">${holidayInterests
+          .map((i) => `<li>${escapeHtml(i)}</li>`)
+          .join('')}</ul>`
+      : ''
 
     const submittedAt = submission.submittedAt.toLocaleString('en-US', {
       weekday: 'long',
@@ -146,12 +152,14 @@ export async function POST(request: NextRequest) {
             <p style="font-weight: 600; margin-bottom: 6px;">Volunteering interests</p>
             <div class="card" style="padding: 12px 16px;">${interestsList}</div>
 
+            ${holidayList
+              ? `<p style="font-weight: 600; margin-bottom: 6px;">&#10052; Holiday Central interests</p>
+            <div class="card" style="padding: 12px 16px;">${holidayList}</div>`
+              : ''}
+
             <div class="card">
               <table>
                 <tbody>
-                  ${row('Availability', availability)}
-                  ${row('How they heard about us', hearAbout)}
-                  ${row('Additional info', additionalInfo)}
                   ${row('Submitted at', submittedAt)}
                 </tbody>
               </table>

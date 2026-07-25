@@ -2,6 +2,15 @@
 
 import { useState } from 'react'
 import PhotoCarousel, { type PhotoItem } from '@/components/PhotoCarousel'
+import { HOLIDAY_CENTRAL_INTERESTS } from '@/lib/holidayCentral'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE FLAG: seasonal "Holiday Central" section.
+// Flip to `false` in the off-season to hide the section entirely; `true` to show
+// it. Before enabling for a new season, VERIFY the Amazon wishlist link and the
+// drop-off date/location in the JSX below.
+// ─────────────────────────────────────────────────────────────────────────────
+const SHOW_HOLIDAY_CENTRAL = true
 
 const VOLUNTEER_PHOTOS: PhotoItem[] = [
   { src: '/photos/volunteer1.jpg' },
@@ -16,41 +25,42 @@ const THANK_YOU_PHOTO = '/photos/volunteer3.jpg'
 const INTEREST_GROUPS = [
   {
     heading: 'Tier 1 — Support Our Mission',
-    note: 'Help power everything we do — no shelter visits required. We’ll set up a meeting with someone from our Development Team to see where you’ll be a great fit.',
+    note: 'Help power everything we do — no shelter visits required. We’ll set up a meeting with someone from our Kids In Crisis Leadership Team who will help guide you.',
     items: [
-      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'Join an event committee for our fundraising events, or represent us out in the community.' },
-      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'Help gather essentials like food, clothing and toiletries, or sponsor a child’s holiday wish list.' },
-      { value: 'Event Volunteers', label: 'Event Volunteers', description: 'Lend a hand at our fundraising and community events.' },
+      { value: 'Special Events & Advocacy', label: 'Special Events & Advocacy', description: 'Donate your expertise year-round on an event committee, or represent us in the community.' },
+      { value: 'Collections & Drives', label: 'Collections & Drives', description: 'Gather essentials or sponsor a holiday wish list.' },
+      { value: 'Event Volunteers', label: 'Event Volunteers', description: 'Lend a hand on the day of our events — no ongoing commitment.' },
     ],
   },
   {
     heading: 'Tier 2 — Make a Direct Impact',
-    note: 'Directly brighten our kids’ days — prepared at home and dropped off, no direct interaction with the children. Someone from our Volunteer Team will meet with you to find the best fit and arrange drop-offs.',
+    note: 'Directly brighten our kids’ days with something you put together at home and drop off. Even a simple drop-off makes a real difference — and just being on-site can be inspiring. Someone from our Kids In Crisis Leadership Team will meet with you to find the best fit and arrange drop-offs.',
     items: [
-      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'Cook a hearty meal for 10 of our residents at your house and drop it off. Perfect for families and groups.' },
-      { value: 'Stuff a Sports Duffle', label: 'Stuff a Sports Duffle', description: 'Gather sports gear in a bag for kids to enjoy (teen sizes are super helpful).' },
-      { value: 'Create an Activity Box', label: 'Create an Activity Box', description: 'Pack a box with craft supplies for 10 lucky children and teens.' },
-      { value: 'Share the Love Basket', label: 'Share the Love Basket', description: 'Assemble a basket of necessities for shelter residents to celebrate special occasions.' },
-      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'Organizing, painting, gardening, or group project days while the kids are at school.' },
+      { value: 'Dinner Donation', label: 'Dinner Donation', description: 'Cook a meal at home and drop it off. Great for groups!' },
+      { value: 'Grocery Shopping for Our Shelter', label: 'Grocery Shopping for Our Shelter', description: 'Take our grocery list to the store — nothing beats the smiles when fresh food and snacks arrive.' },
+      { value: 'Restock Our Clinic', label: 'Restock Our Clinic', description: 'Every kid at the shelter uses our clinic. Help us keep drugstore essentials stocked.' },
+      { value: 'Birthday Basket', label: 'Birthday Basket', description: 'Celebrate the birthdays of every kid staying in the shelter this month.' },
+      { value: 'Facility Upkeep', label: 'Facility Upkeep', description: 'Organize, paint, or garden while the kids are at school.' },
     ],
   },
   {
-    heading: 'Tier 3 — Engage with the Kids',
-    note: 'This one is so fulfilling! Because these roles involve engaging with our kids — even under staff supervision — we’re required to vet these volunteers more carefully.',
+    heading: 'Tier 3 — Lead One of Our External Programs',
+    note: 'Lead one of our programs out in the community. Because you will be working with vulnerable populations, these roles require additional background checks and paperwork. Some roles may require additional screening depending on the program.',
     items: [
-      { value: 'Cook a Meal with our Kids', label: 'Cook a Meal with our Kids', description: 'Come to the shelter and cook dinner alongside our residents.' },
-      { value: 'Garden with our Kids', label: 'Garden with our Kids', description: 'Dig in the dirt and garden side by side with our kids.' },
-      { value: 'Help our Kids with Homework', label: 'Help our Kids with Homework', description: 'Support our kids and teens with homework and schoolwork.' },
-      { value: 'Outdoor Fun with our Kids', label: 'Outdoor Fun with our Kids', description: 'When the weather warms up, host a BBQ or a game of volleyball!' },
-      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an excursion out of the shelter — a bowling alley, pottery studio, or museum.' },
+      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Commit to helping lead weekly teen meetings — the heart of the program.' },
+      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help teach K–5 kids to recognize unsafe situations.' },
+      { value: 'Host a Lighthouse Activity', label: 'Host a Lighthouse Activity', description: 'One-time fun: teach a skill you love, from sewing to pottery.' },
     ],
   },
   {
-    heading: 'Tier 4 — Lead Our Programs',
-    note: 'Our highest level of volunteering — leading programs where you may work with kids with less direct supervision. These roles require our most thorough vetting.',
+    heading: 'Tier 4 — Engage with the Kids at the SafeHaven Shelter',
+    note: 'This one is so fulfilling! You’ll spend time directly with our kids at the shelter. Because you will be working with vulnerable populations, these roles require additional background checks and paperwork.',
     items: [
-      { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Help lead weekly meetings where teens and their allies gather in a welcoming, inclusive, safe space.' },
-      { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help trained staff teach K–5 kids in local schools how to recognize and respond to unsafe situations.' },
+      { value: 'Cook a Meal with our Kids', label: 'Cook a Meal with our Kids', description: 'Cook dinner at the shelter with our residents.' },
+      { value: 'Garden with our Kids', label: 'Garden with our Kids', description: 'Garden side by side with our kids.' },
+      { value: 'Help our Kids with Homework', label: 'Help our Kids with Homework', description: 'Homework help for our kids and teens.' },
+      { value: 'Outdoor Fun with our Kids', label: 'Outdoor Fun with our Kids', description: 'Host a BBQ or backyard games.' },
+      { value: 'Activities with Residents', label: 'Activities with Residents', description: 'Sponsor and join an outing — bowling, pottery, a museum.' },
     ],
   },
 ] as const
@@ -59,33 +69,34 @@ const TIER_REQUIREMENTS = [
   {
     heading: 'Tier 1 — Support Our Mission',
     requirements: [
-      'Meet with and be approved by someone from the KIC Development Team',
+      'Meet with the Kids In Crisis Leadership Team, who will help guide you',
     ],
   },
   {
     heading: 'Tier 2 — Make a Direct Impact',
     requirements: [
-      'Meet with and be approved by someone from the KIC Volunteer Team',
+      'Meet with and be approved by the Kids In Crisis Leadership Team',
     ],
   },
   {
-    heading: 'Tier 3 — Engage with the Kids',
+    heading: 'Tier 3 — Lead One of Our External Programs',
     requirements: [
-      'Meet with and be approved by someone from the KIC Volunteer Team',
+      'Meet with and be approved by the Kids In Crisis Leadership Team',
       'Completed application form',
       'References',
       'Conduct standards agreement',
       'Confidentiality agreement',
+      'Mandated reporter acknowledgment',
+      'Self-attestation of general good health',
       'Training session',
+      'Some roles may require additional screening depending on the program',
     ],
   },
   {
-    heading: 'Tier 4 — Lead Our Programs',
+    heading: 'Tier 4 — Engage with the Kids at the SafeHaven Shelter',
     requirements: [
-      'Everything in Tier 3',
+      'Everything in Tier 3, except the health requirement is a medical form completed by your doctor instead of a self-attestation',
       'Background checks (DCF CPS + CT criminal history)',
-      'Mandated reporter acknowledgment',
-      'Self-attestation of general good health',
     ],
   },
 ] as const
@@ -102,9 +113,6 @@ export default function VolunteerPage() {
     groupName: '',
     interests: [] as string[],
     otherInterest: '',
-    availability: '',
-    hearAbout: '',
-    additionalInfo: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -316,7 +324,7 @@ export default function VolunteerPage() {
                               className="accent-[#e31837] mt-1"
                             />
                             <span className="text-sm">
-                              <span className="font-medium">{item.label}</span>
+                              <span className="font-bold">{item.label}</span>
                               <span className="text-gray-600"> &mdash; {item.description}</span>
                             </span>
                           </label>
@@ -324,6 +332,53 @@ export default function VolunteerPage() {
                       </div>
                     </div>
                   ))}
+
+                  {SHOW_HOLIDAY_CENTRAL && (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <p className="font-bold text-gray-800 text-lg mb-1">&#10052; Holiday Central &#10052;</p>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Every November, Kids In Crisis collects and distributes holiday gifts to children
+                        from over 500 families throughout Fairfield County. For these families the holidays
+                        can be tough &mdash; and your support truly makes a difference.
+                      </p>
+
+                      {/* [VERIFY: current year's wishlist link before enabling] */}
+                      <a
+                        href="https://www.amazon.com/registries/gl/guest-view/2UBTXI058ACZX"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-primary inline-block mb-4"
+                      >
+                        View the Holiday Central Amazon Wishlist
+                      </a>
+
+                      <div className="space-y-2">
+                        {HOLIDAY_CENTRAL_INTERESTS.map((item) => (
+                          <label
+                            key={item.value}
+                            className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.interests.includes(item.value)}
+                              onChange={() => toggleInterest(item.value)}
+                              className="accent-[#e31837] mt-1"
+                            />
+                            <span className="text-sm">
+                              <span className="font-bold">{item.label}</span>
+                              <span className="text-gray-600"> &mdash; {item.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* [VERIFY: date and location before enabling] */}
+                      <p className="text-xs text-gray-500 mt-3">
+                        All items should be received by Friday, December 5th at North Greenwich
+                        Congregational Church, 606 Riversville Rd., Greenwich, CT 06831.
+                      </p>
+                    </div>
+                  )}
 
                   <div>
                     <p className="font-bold text-gray-800 mb-2">Something else</p>
@@ -369,45 +424,6 @@ export default function VolunteerPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="availability" className="form-label">
-                  What days and times are you generally available?
-                </label>
-                <textarea
-                  id="availability"
-                  rows={2}
-                  className="form-input"
-                  value={formData.availability}
-                  onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="hearAbout" className="form-label">
-                  How did you hear about Kids In Crisis?
-                </label>
-                <textarea
-                  id="hearAbout"
-                  rows={2}
-                  className="form-input"
-                  value={formData.hearAbout}
-                  onChange={(e) => setFormData({ ...formData, hearAbout: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="additionalInfo" className="form-label">
-                  Anything else you&rsquo;d like us to know?
-                </label>
-                <textarea
-                  id="additionalInfo"
-                  rows={3}
-                  className="form-input"
-                  value={formData.additionalInfo}
-                  onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
-                />
               </div>
 
               {error && (

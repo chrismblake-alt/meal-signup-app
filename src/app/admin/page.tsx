@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { HOLIDAY_CENTRAL_VALUES } from '@/lib/holidayCentral'
 
 interface Signup {
   id: string
@@ -40,12 +41,46 @@ interface Volunteer {
   submittedAt: string
 }
 
+interface Application {
+  id: string
+  fullName: string
+  streetAddress: string
+  townCity: string
+  state: string
+  zip: string
+  email: string
+  phone: string
+  emergencyName: string
+  emergencyRelationship: string
+  emergencyPhone: string
+  roles: string[]
+  tier4Applied: boolean
+  priorExperience: string | null
+  specialTraining: string | null
+  communityService: string | null
+  reference1Name: string
+  reference1Phone: string
+  reference1Email: string
+  reference2Name: string
+  reference2Phone: string
+  reference2Email: string
+  agreeConduct: boolean
+  agreeConfidentiality: boolean
+  agreeResidentGuidelines: boolean
+  agreeMandatedReporter: boolean
+  attestHealth: boolean
+  signature: string
+  signedAt: string
+  submittedAt: string
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [signups, setSignups] = useState<Signup[]>([])
   const [stories, setStories] = useState<Story[]>([])
   const [volunteers, setVolunteers] = useState<Volunteer[]>([])
-  const [activeTab, setActiveTab] = useState<'signups' | 'stories' | 'volunteers'>('signups')
+  const [applications, setApplications] = useState<Application[]>([])
+  const [activeTab, setActiveTab] = useState<'signups' | 'stories' | 'volunteers' | 'applications'>('signups')
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -58,19 +93,22 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [signupsRes, storiesRes, volunteersRes] = await Promise.all([
+      const [signupsRes, storiesRes, volunteersRes, applicationsRes] = await Promise.all([
         fetch('/api/signups'),
         fetch('/api/stories'),
         fetch('/api/volunteer'),
+        fetch('/api/volunteer/apply'),
       ])
 
       const signupsData = await signupsRes.json()
       const storiesData = await storiesRes.json()
       const volunteersData = await volunteersRes.json()
+      const applicationsData = await applicationsRes.json()
 
       setSignups(Array.isArray(signupsData) ? signupsData : [])
       setStories(Array.isArray(storiesData) ? storiesData : [])
       setVolunteers(Array.isArray(volunteersData) ? volunteersData : [])
+      setApplications(Array.isArray(applicationsData) ? applicationsData : [])
     } catch (error) {
       console.error('Failed to load data:', error)
     } finally {
@@ -288,6 +326,16 @@ export default function AdminDashboard() {
           >
             Volunteer Interest
           </button>
+          <button
+            onClick={() => setActiveTab('applications')}
+            className={`pb-3 px-1 font-medium transition ${
+              activeTab === 'applications'
+                ? 'text-[#e31837] border-b-2 border-[#e31837]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Volunteer Applications
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -460,6 +508,10 @@ export default function AdminDashboard() {
                     hour: 'numeric',
                     minute: '2-digit',
                   })
+                  // Holiday Central selections live in the same interests array; split
+                  // them out so they can be labeled separately.
+                  const holidayInterests = v.interests.filter((i) => HOLIDAY_CENTRAL_VALUES.includes(i))
+                  const generalInterests = v.interests.filter((i) => !HOLIDAY_CENTRAL_VALUES.includes(i))
                   return (
                     <div key={v.id} className="card">
                       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
@@ -489,11 +541,11 @@ export default function AdminDashboard() {
 
                         <dt className="font-medium text-gray-600">Interests</dt>
                         <dd className="text-gray-800">
-                          {v.interests.length === 0 ? (
+                          {generalInterests.length === 0 ? (
                             <span className="text-gray-400 italic">(none selected)</span>
                           ) : (
                             <ul className="list-disc pl-5 space-y-0.5">
-                              {v.interests.map((i) => (
+                              {generalInterests.map((i) => (
                                 <li key={i}>
                                   {i}
                                   {i === 'Other' && v.otherInterest && (
@@ -504,6 +556,19 @@ export default function AdminDashboard() {
                             </ul>
                           )}
                         </dd>
+
+                        {holidayInterests.length > 0 && (
+                          <>
+                            <dt className="font-medium text-gray-600">&#10052; Holiday Central</dt>
+                            <dd className="text-gray-800">
+                              <ul className="list-disc pl-5 space-y-0.5">
+                                {holidayInterests.map((i) => (
+                                  <li key={i}>{i}</li>
+                                ))}
+                              </ul>
+                            </dd>
+                          </>
+                        )}
 
                         {v.availability && (
                           <>
@@ -525,6 +590,127 @@ export default function AdminDashboard() {
                             <dd className="text-gray-800 whitespace-pre-wrap">{v.additionalInfo}</dd>
                           </>
                         )}
+                      </dl>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'applications' && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Volunteer Applications</h2>
+              <p className="text-sm text-gray-500">{applications.length} application{applications.length === 1 ? '' : 's'}</p>
+            </div>
+
+            {applications.length === 0 ? (
+              <div className="card text-center text-gray-500 py-8">
+                No volunteer applications yet
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {applications.map((a) => {
+                  const submitted = new Date(a.submittedAt).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })
+                  return (
+                    <div key={a.id} className="card">
+                      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                        <p className="font-semibold text-lg">
+                          {a.fullName}
+                          {a.tier4Applied && (
+                            <span className="ml-2 align-middle text-xs font-semibold px-2 py-0.5 rounded-full bg-[#e31837]/10 text-[#e31837]">
+                              Tier 4
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-500">{submitted}</p>
+                      </div>
+
+                      <dl className="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-y-2 gap-x-3 text-sm">
+                        <dt className="font-medium text-gray-600">Email</dt>
+                        <dd className="text-gray-800 break-all">
+                          <a href={`mailto:${a.email}`} className="text-[#e31837] underline">{a.email}</a>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Phone</dt>
+                        <dd className="text-gray-800">
+                          <a href={`tel:${a.phone}`} className="text-[#e31837] underline">{a.phone}</a>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Address</dt>
+                        <dd className="text-gray-800">{a.streetAddress}, {a.townCity}, {a.state} {a.zip}</dd>
+
+                        <dt className="font-medium text-gray-600">Emergency contact</dt>
+                        <dd className="text-gray-800">
+                          {a.emergencyName} ({a.emergencyRelationship}) &mdash; {a.emergencyPhone}
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Roles</dt>
+                        <dd className="text-gray-800">
+                          <ul className="list-disc pl-5 space-y-0.5">
+                            {a.roles.map((r) => <li key={r}>{r}</li>)}
+                          </ul>
+                        </dd>
+
+                        {a.priorExperience && (
+                          <>
+                            <dt className="font-medium text-gray-600">Prior experience</dt>
+                            <dd className="text-gray-800 whitespace-pre-wrap">{a.priorExperience}</dd>
+                          </>
+                        )}
+                        {a.specialTraining && (
+                          <>
+                            <dt className="font-medium text-gray-600">Special training / hobby</dt>
+                            <dd className="text-gray-800 whitespace-pre-wrap">{a.specialTraining}</dd>
+                          </>
+                        )}
+                        {a.communityService && (
+                          <>
+                            <dt className="font-medium text-gray-600">Community service</dt>
+                            <dd className="text-gray-800 whitespace-pre-wrap">{a.communityService}</dd>
+                          </>
+                        )}
+
+                        <dt className="font-medium text-gray-600">Reference 1</dt>
+                        <dd className="text-gray-800">
+                          {a.reference1Name} &mdash; {a.reference1Phone} &mdash;{' '}
+                          <a href={`mailto:${a.reference1Email}`} className="text-[#e31837] underline break-all">{a.reference1Email}</a>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Reference 2</dt>
+                        <dd className="text-gray-800">
+                          {a.reference2Name} &mdash; {a.reference2Phone} &mdash;{' '}
+                          <a href={`mailto:${a.reference2Email}`} className="text-[#e31837] underline break-all">{a.reference2Email}</a>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Acknowledgments</dt>
+                        <dd className="text-gray-800">
+                          <ul className="space-y-0.5">
+                            <li>{a.agreeConduct ? '✓' : '✗'} Conduct Standards</li>
+                            <li>{a.agreeConfidentiality ? '✓' : '✗'} Confidentiality statute</li>
+                            <li>{a.agreeResidentGuidelines ? '✓' : '✗'} Resident Guidelines</li>
+                            {a.tier4Applied && (
+                              <>
+                                <li>{a.agreeMandatedReporter ? '✓' : '✗'} Mandated Reporter</li>
+                                <li>{a.attestHealth ? '✓' : '✗'} Health self-attestation</li>
+                              </>
+                            )}
+                          </ul>
+                        </dd>
+
+                        <dt className="font-medium text-gray-600">Signature</dt>
+                        <dd className="text-gray-800">
+                          {a.signature}
+                          <span className="text-gray-500"> — {new Date(a.signedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </dd>
                       </dl>
                     </div>
                   )

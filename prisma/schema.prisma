@@ -66,3 +66,50 @@ model VolunteerInterest {
   additionalInfo String?
   submittedAt    DateTime @default(now())
 }
+
+model VolunteerApplication {
+  id String @id @default(cuid())
+
+  // Section 1 — About You
+  fullName      String
+  streetAddress String
+  townCity      String
+  state         String @default("CT")
+  zip           String
+  email         String
+  phone         String
+
+  emergencyName         String
+  emergencyRelationship String
+  emergencyPhone        String
+
+  // Section 2 — Roles
+  roles        String[]
+  tier4Applied Boolean  @default(false)
+
+  // Section 3 — Experience
+  priorExperience  String?
+  specialTraining  String?
+  communityService String?
+
+  // Section 4 — References
+  reference1Name  String
+  reference1Phone String
+  reference1Email String
+  reference2Name  String
+  reference2Phone String
+  reference2Email String
+
+  // Sections 5–9 — Acknowledgments
+  agreeConduct            Boolean @default(false)
+  agreeConfidentiality    Boolean @default(false)
+  agreeResidentGuidelines Boolean @default(false)
+  agreeMandatedReporter   Boolean @default(false)
+  attestHealth            Boolean @default(false)
+
+  // Section 10 — Signature
+  signature String
+  signedAt  DateTime @default(now())
+
+  submittedAt DateTime @default(now())
+}
