@@ -34,7 +34,7 @@ const INTEREST_GROUPS = [
   },
   {
     heading: 'Tier 2 — Make a Direct Impact',
-    note: 'Directly brighten our kids’ days with something you put together at home and drop off. Even a simple drop-off makes a real difference — and just being on-site can be inspiring. Someone from our Kids In Crisis Leadership Team will meet with you to find the best fit and arrange drop-offs.',
+    note: 'Brighten our kids’ days with something you put together at home and drop off. Even a simple drop-off makes a real difference — and just being on-site can be inspiring. Someone from our Kids In Crisis Leadership Team will meet with you to find the best fit and arrange drop-offs.',
     items: [
       { value: 'Dinner Donation', label: 'Dinner Donation', description: 'Cook a meal at home and drop it off. Great for groups!' },
       { value: 'Grocery Shopping for Our Shelter', label: 'Grocery Shopping for Our Shelter', description: 'Take our grocery list to the store — nothing beats the smiles when fresh food and snacks arrive.' },
