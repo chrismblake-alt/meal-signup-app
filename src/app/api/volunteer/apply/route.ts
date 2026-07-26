@@ -8,20 +8,7 @@ const NOTIFICATION_RECIPIENTS = [
   'kphillips@kidsincrisis.org',
 ]
 
-const VALID_ROLES = [
-  'Cook a Meal with our Kids',
-  'Garden with our Kids',
-  'Help our Kids with Homework',
-  'Outdoor Fun with our Kids',
-  'Activities with Residents',
-  'Lighthouse Facilitator or Coordinator (Tier 4)',
-  'SafeTalk Volunteer (Tier 4)',
-]
-
-const TIER4_ROLES = [
-  'Lighthouse Facilitator or Coordinator (Tier 4)',
-  'SafeTalk Volunteer (Tier 4)',
-]
+const VALID_TIERS = ['Tier 3', 'Tier 4']
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -110,10 +97,9 @@ export async function POST(request: NextRequest) {
     const reference2Email = clean(body.reference2Email, 200)
     const signature = clean(body.signature, 200)
 
-    const roles: string[] = Array.isArray(body.roles)
-      ? body.roles.filter((r: unknown): r is string => typeof r === 'string' && VALID_ROLES.includes(r))
-      : []
-    const tier4Applied = roles.some((r) => TIER4_ROLES.includes(r))
+    const tier = typeof body.tier === 'string' && VALID_TIERS.includes(body.tier) ? body.tier : ''
+    const tier4Applied = tier === 'Tier 4'
+    const isTier3 = tier === 'Tier 3'
 
     const agreeConduct = body.agreeConduct === true
     const agreeConfidentiality = body.agreeConfidentiality === true
@@ -153,17 +139,18 @@ export async function POST(request: NextRequest) {
     if (!EMAIL_RE.test(reference1Email) || !EMAIL_RE.test(reference2Email)) {
       return NextResponse.json({ error: 'Invalid reference email address' }, { status: 400 })
     }
-    if (roles.length === 0) {
-      return NextResponse.json({ error: 'Please select at least one volunteer role' }, { status: 400 })
+    if (!tier) {
+      return NextResponse.json({ error: 'Please select which level you are applying for' }, { status: 400 })
     }
 
-    // Required acknowledgments (always).
-    if (!agreeConduct || !agreeConfidentiality || !agreeResidentGuidelines) {
+    // Required acknowledgments: conduct, confidentiality, resident guidelines, and
+    // mandated reporter are required for everyone (both tiers).
+    if (!agreeConduct || !agreeConfidentiality || !agreeResidentGuidelines || !agreeMandatedReporter) {
       return NextResponse.json({ error: 'Required acknowledgments are missing' }, { status: 400 })
     }
-    // Tier 4 acknowledgments (only when a Tier 4 role is selected).
-    if (tier4Applied && (!agreeMandatedReporter || !attestHealth)) {
-      return NextResponse.json({ error: 'Required Tier 4 acknowledgments are missing' }, { status: 400 })
+    // Health self-attestation is required only for Tier 3 (Tier 4 uses a doctor's medical form instead).
+    if (isTier3 && !attestHealth) {
+      return NextResponse.json({ error: 'The health self-attestation is required' }, { status: 400 })
     }
 
     // Mark this source as having just submitted (only once past validation).
@@ -181,7 +168,9 @@ export async function POST(request: NextRequest) {
         emergencyName,
         emergencyRelationship,
         emergencyPhone,
-        roles,
+        tier,
+        // roles column retained but unused now that a single tier is selected.
+        roles: [],
         tier4Applied,
         priorExperience: priorExperience || null,
         specialTraining: specialTraining || null,
@@ -195,20 +184,17 @@ export async function POST(request: NextRequest) {
         agreeConduct,
         agreeConfidentiality,
         agreeResidentGuidelines,
-        // Store Tier 4 acknowledgments only when they actually apply.
-        agreeMandatedReporter: tier4Applied ? agreeMandatedReporter : false,
-        attestHealth: tier4Applied ? attestHealth : false,
+        // Mandated reporter is acknowledged by everyone; health attestation is Tier 3 only.
+        agreeMandatedReporter,
+        attestHealth: isTier3 ? attestHealth : false,
         signature,
       },
     })
 
-    // Minimal notification email — no applicant details beyond name/roles/tier.
-    const rolesList = roles.map((r) => `<li>${escapeHtml(r)}</li>`).join('')
+    // Minimal notification email — no applicant details beyond name and tier.
     const html = `
       <p><strong>Name:</strong> ${escapeHtml(fullName)}</p>
-      <p><strong>Roles selected:</strong></p>
-      <ul>${rolesList}</ul>
-      <p><strong>Tier 4 applies:</strong> ${tier4Applied ? 'Yes' : 'No'}</p>
+      <p><strong>Applying for:</strong> ${escapeHtml(tier)}</p>
       <p>View the full application in the admin dashboard.</p>
     `
 
@@ -222,7 +208,7 @@ export async function POST(request: NextRequest) {
       console.error('Volunteer application email failed to send; submission was still saved.', emailResult.error)
     }
 
-    return NextResponse.json({ success: true, tier4: application.tier4Applied })
+    return NextResponse.json({ success: true, tier: application.tier })
   } catch (error) {
     console.error('Error creating volunteer application:', error)
     return NextResponse.json({ error: 'Failed to submit application' }, { status: 500 })

@@ -2,19 +2,24 @@
 
 import { useState } from 'react'
 
-const ROLES = [
-  'Cook a Meal with our Kids',
-  'Garden with our Kids',
-  'Help our Kids with Homework',
-  'Outdoor Fun with our Kids',
-  'Activities with Residents',
-  'Lighthouse Facilitator or Coordinator (Tier 4)',
-  'SafeTalk Volunteer (Tier 4)',
+const TIERS = [
+  {
+    value: 'Tier 3',
+    title: 'Tier 3 — Lead One of Our External Programs',
+    roles: 'Lighthouse Facilitator or Coordinator · Host a Lighthouse Activity · SafeTalk Volunteer',
+  },
+  {
+    value: 'Tier 4',
+    title: 'Tier 4 — Engage with the Kids at the SafeHaven Shelter',
+    roles: 'Help our Kids with Homework · Share Your Arts with our Kids · Garden with our Kids · Cook a Meal with our Kids · Outdoor Fun with our Kids · Activities with Residents',
+  },
 ] as const
 
-const TIER4_ROLES: readonly string[] = [
-  'Lighthouse Facilitator or Coordinator (Tier 4)',
-  'SafeTalk Volunteer (Tier 4)',
+const CONDUCT_BULLETS = [
+  'Your relationship with the kids exists only within Kids In Crisis programs — no contact outside, and no staying in touch after, even when a child asks. Kids here may form attachments quickly, and these boundaries protect them from another loss.',
+  'Never share your phone number, address, or social media with residents — and no visits to your home, ever.',
+  'No gifts to a child (even small treats) without their Social Worker’s OK, and no accepting gifts from kids or their families.',
+  'If you’re ever unsure what’s appropriate, ask a staff member — that’s always the right move.',
 ]
 
 const CONFIDENTIALITY_BULLETS = [
@@ -43,7 +48,7 @@ interface FormState {
   emergencyName: string
   emergencyRelationship: string
   emergencyPhone: string
-  roles: string[]
+  tier: string
   priorExperience: string
   specialTraining: string
   communityService: string
@@ -74,7 +79,7 @@ const INITIAL_STATE: FormState = {
   emergencyName: '',
   emergencyRelationship: '',
   emergencyPhone: '',
-  roles: [],
+  tier: '',
   priorExperience: '',
   specialTraining: '',
   communityService: '',
@@ -120,9 +125,10 @@ export default function ApplyForm({
   const [form, setForm] = useState<FormState>(INITIAL_STATE)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [submitted, setSubmitted] = useState<null | { tier4: boolean }>(null)
+  const [submitted, setSubmitted] = useState<null | { tier: string }>(null)
 
-  const tier4 = form.roles.some((r) => TIER4_ROLES.includes(r))
+  const isTier3 = form.tier === 'Tier 3'
+  const isTier4 = form.tier === 'Tier 4'
 
   const todayStr = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -132,14 +138,6 @@ export default function ApplyForm({
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }))
-
-  const toggleRole = (role: string) =>
-    setForm((prev) => ({
-      ...prev,
-      roles: prev.roles.includes(role)
-        ? prev.roles.filter((r) => r !== role)
-        : [...prev.roles, role],
-    }))
 
   const validate = (): string | null => {
     const required: Array<[keyof FormState, string]> = [
@@ -169,13 +167,13 @@ export default function ApplyForm({
     if (!EMAIL_RE.test(form.reference1Email.trim())) return 'Please enter a valid email for reference 1.'
     if (!EMAIL_RE.test(form.reference2Email.trim())) return 'Please enter a valid email for reference 2.'
 
-    if (form.roles.length === 0) return 'Please select at least one volunteer role.'
+    if (form.tier !== 'Tier 3' && form.tier !== 'Tier 4') return 'Please select which level you are applying for (Section 2).'
 
     if (!form.agreeConduct) return 'Please agree to the Volunteer Conduct Standards (Section 5).'
     if (!form.agreeConfidentiality) return 'Please acknowledge the Confidentiality statute (Section 6).'
     if (!form.agreeResidentGuidelines) return 'Please acknowledge the Guidelines for Interacting with Residents (Section 7).'
-    if (tier4 && !form.agreeMandatedReporter) return 'Please acknowledge the Mandated Reporter expectations (Section 8).'
-    if (tier4 && !form.attestHealth) return 'Please complete the health self-attestation (Section 9).'
+    if (!form.agreeMandatedReporter) return 'Please acknowledge the Mandated Reporter expectations (Section 8).'
+    if (isTier3 && !form.attestHealth) return 'Please complete the health self-attestation (Section 9).'
 
     return null
   }
@@ -201,7 +199,7 @@ export default function ApplyForm({
       if (!response.ok) {
         throw new Error(data.error || 'Something went wrong')
       }
-      setSubmitted({ tier4: Boolean(data.tier4) })
+      setSubmitted({ tier: typeof data.tier === 'string' ? data.tier : form.tier })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -216,16 +214,21 @@ export default function ApplyForm({
         <div className="max-w-3xl mx-auto">
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 md:p-8">
             <div className="text-green-600 text-5xl mb-4 text-center">&#10003;</div>
-            {submitted.tier4 ? (
+            {submitted.tier === 'Tier 4' ? (
               <>
                 <h2 className="text-2xl font-semibold text-green-800 mb-4 text-center">
-                  Application received — two more steps
+                  Application received — a few more steps
                 </h2>
                 <p className="text-green-800 mb-4">
-                  Thank you! Jennifer will be in touch soon. Because your role involves working
-                  directly with our kids, Connecticut requires two background checks:
+                  Thank you! Jennifer will be in touch soon. Because you&rsquo;ll be spending time
+                  directly with our kids at the shelter, Connecticut requires a medical form and two
+                  background checks:
                 </p>
                 <ol className="list-decimal pl-6 space-y-3 text-green-800">
+                  <li>
+                    <span className="font-semibold">Doctor&rsquo;s Medical Form</span> — We&rsquo;ll send
+                    you a short medical form for your doctor to complete and sign.
+                  </li>
                   <li>
                     <span className="font-semibold">DCF Background Check</span> — We&rsquo;ll send you
                     the DCF authorization form (DCF-3031) to complete.
@@ -340,21 +343,69 @@ export default function ApplyForm({
 
           {/* SECTION 2 */}
           <div className="card">
-            <SectionHeading number={2} title="Your Roles" />
-            <p className="text-gray-600 mb-3">Which volunteer roles are you pursuing? Check all that apply:</p>
-            <div className="space-y-2">
-              {ROLES.map((role) => (
-                <label key={role} className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                  <input type="checkbox" className="accent-[#e31837] mt-1" checked={form.roles.includes(role)} onChange={() => toggleRole(role)} />
-                  <span className="text-sm font-medium">{role}</span>
-                </label>
-              ))}
+            <SectionHeading number={2} title="Which Level Are You Applying For?" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {TIERS.map((t) => {
+                const selected = form.tier === t.value
+                return (
+                  <label
+                    key={t.value}
+                    className={`block p-5 rounded-xl border-2 cursor-pointer transition ${
+                      selected ? 'border-[#e31837] bg-[#e31837]/5' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="tier"
+                      value={t.value}
+                      checked={selected}
+                      onChange={() => set('tier', t.value)}
+                      className="sr-only"
+                    />
+                    <span className="flex items-start gap-3">
+                      <span
+                        className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                          selected ? 'border-[#e31837]' : 'border-gray-300'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {selected && <span className="h-2 w-2 rounded-full bg-[#e31837]" />}
+                      </span>
+                      <span>
+                        <span className="block font-bold text-gray-800">{t.title}</span>
+                        <span className="mt-1 block text-sm text-gray-500">{t.roles}</span>
+                      </span>
+                    </span>
+                  </label>
+                )
+              })}
             </div>
-            {tier4 && (
-              <p className="mt-3 text-sm text-gray-500 italic">
-                Because you selected a Tier 4 role, Sections 8 and 9 below are now required.
-              </p>
+
+            {isTier4 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
+                <p className="font-semibold text-amber-900 mb-2">A note about what comes next</p>
+                <p className="text-sm text-amber-900 mb-2">
+                  The children at our shelter have often been through a lot, and keeping them safe is at
+                  the heart of everything we do. Because Tier 4 volunteers spend time directly with our
+                  kids, Connecticut requires — and we wholeheartedly agree — a few extra steps:
+                </p>
+                <ul className="list-disc pl-5 space-y-1.5 text-sm text-amber-900">
+                  <li>
+                    Medical clearance from your doctor (instead of the self-attestation) — we’ll send you
+                    the simple form
+                  </li>
+                  <li>Two background checks, which our team will guide you through step by step</li>
+                </ul>
+                <p className="text-sm text-amber-900 mt-2">
+                  There’s nothing to do about these today — finish this application, and we’ll walk you
+                  through each step. Thank you for understanding; it’s all for the kids.
+                </p>
+              </div>
             )}
+
+            <p className="mt-3 text-sm text-gray-500 italic">
+              Applying for roles in both tiers? Choose Tier 4 — it covers everything.
+            </p>
           </div>
 
           {/* SECTION 3 */}
@@ -407,6 +458,22 @@ export default function ApplyForm({
           {/* SECTION 5 */}
           <div className="card">
             <SectionHeading number={5} title="Volunteer Conduct Standards" />
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <p className="font-semibold text-amber-900 mb-2">What you&rsquo;re agreeing to, in plain English</p>
+              <p className="text-sm text-amber-900 mb-2">
+                The full standards are below, but here&rsquo;s the heart of it: your relationship with our
+                kids is a professional one, like a teacher&rsquo;s — warm, caring, and inside clear
+                boundaries. The boundaries that surprise people most:
+              </p>
+              <ul className="list-disc pl-5 space-y-1.5 text-sm text-amber-900">
+                {CONDUCT_BULLETS.map((b, i) => (
+                  <li key={i}>{b}</li>
+                ))}
+              </ul>
+              <p className="text-sm text-amber-900 mt-2">
+                The full standards below are what you&rsquo;re agreeing to.
+              </p>
+            </div>
             <LegalBox text={conductStandards} />
             <label className="flex items-start gap-3 mt-4 cursor-pointer">
               <input type="checkbox" className="accent-[#e31837] mt-1" checked={form.agreeConduct} onChange={(e) => set('agreeConduct', e.target.checked)} />
@@ -455,16 +522,8 @@ export default function ApplyForm({
             </label>
           </div>
 
-          {/* SECTION 8 — Tier 4 only */}
-          {tier4 && (
-            <p className="text-sm text-gray-500 italic">
-              Because you selected a Tier 4 role, two additional sections are required below.
-            </p>
-          )}
-
-          {/* SECTION 8 — Tier 4 only */}
-          {tier4 && (
-            <div className="card">
+          {/* SECTION 8 — required for everyone */}
+          <div className="card">
               <SectionHeading number={8} title="Mandated Reporter" />
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
                 <p className="font-semibold text-amber-900 mb-2">In plain English</p>
@@ -485,11 +544,10 @@ export default function ApplyForm({
                   volunteering at Kids In Crisis. *
                 </span>
               </label>
-            </div>
-          )}
+          </div>
 
-          {/* SECTION 9 — Tier 4 only */}
-          {tier4 && (
+          {/* SECTION 9 — required for Tier 3 only */}
+          {isTier3 && (
             <div className="card">
               <SectionHeading number={9} title="Health Self-Attestation" />
               <label className="flex items-start gap-3 cursor-pointer">

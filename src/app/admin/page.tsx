@@ -53,6 +53,7 @@ interface Application {
   emergencyName: string
   emergencyRelationship: string
   emergencyPhone: string
+  tier: string
   roles: string[]
   tier4Applied: boolean
   priorExperience: string | null
@@ -625,9 +626,9 @@ export default function AdminDashboard() {
                       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
                         <p className="font-semibold text-lg">
                           {a.fullName}
-                          {a.tier4Applied && (
+                          {(a.tier || (a.tier4Applied ? 'Tier 4' : '')) && (
                             <span className="ml-2 align-middle text-xs font-semibold px-2 py-0.5 rounded-full bg-[#e31837]/10 text-[#e31837]">
-                              Tier 4
+                              {a.tier || (a.tier4Applied ? 'Tier 4' : 'Tier 3')}
                             </span>
                           )}
                         </p>
@@ -651,13 +652,6 @@ export default function AdminDashboard() {
                         <dt className="font-medium text-gray-600">Emergency contact</dt>
                         <dd className="text-gray-800">
                           {a.emergencyName} ({a.emergencyRelationship}) &mdash; {a.emergencyPhone}
-                        </dd>
-
-                        <dt className="font-medium text-gray-600">Roles</dt>
-                        <dd className="text-gray-800">
-                          <ul className="list-disc pl-5 space-y-0.5">
-                            {a.roles.map((r) => <li key={r}>{r}</li>)}
-                          </ul>
                         </dd>
 
                         {a.priorExperience && (
@@ -697,11 +691,9 @@ export default function AdminDashboard() {
                             <li>{a.agreeConduct ? '✓' : '✗'} Conduct Standards</li>
                             <li>{a.agreeConfidentiality ? '✓' : '✗'} Confidentiality statute</li>
                             <li>{a.agreeResidentGuidelines ? '✓' : '✗'} Resident Guidelines</li>
-                            {a.tier4Applied && (
-                              <>
-                                <li>{a.agreeMandatedReporter ? '✓' : '✗'} Mandated Reporter</li>
-                                <li>{a.attestHealth ? '✓' : '✗'} Health self-attestation</li>
-                              </>
+                            <li>{a.agreeMandatedReporter ? '✓' : '✗'} Mandated Reporter</li>
+                            {a.tier === 'Tier 3' && (
+                              <li>{a.attestHealth ? '✓' : '✗'} Health self-attestation</li>
                             )}
                           </ul>
                         </dd>

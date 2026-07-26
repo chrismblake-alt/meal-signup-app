@@ -83,7 +83,9 @@ model VolunteerApplication {
   emergencyRelationship String
   emergencyPhone        String
 
-  // Section 2 — Roles
+  // Section 2 — Tier selection ("Tier 3" or "Tier 4").
+  // `roles` is retained for backward compatibility but no longer populated.
+  tier         String   @default("")
   roles        String[]
   tier4Applied Boolean  @default(false)
 
