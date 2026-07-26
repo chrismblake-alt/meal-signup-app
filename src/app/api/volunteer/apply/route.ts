@@ -6,6 +6,7 @@ import { getSession } from '@/lib/auth'
 const NOTIFICATION_RECIPIENTS = [
   'jfebles@kidsincrisis.org',
   'kphillips@kidsincrisis.org',
+  'development@kidsincrisis.org',
 ]
 
 const VALID_TIERS = ['Tier 3', 'Tier 4']
