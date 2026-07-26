@@ -48,13 +48,13 @@ const INTEREST_GROUPS = [
     note: 'Lead one of our programs out in the community. Because you will be working with vulnerable populations, these roles require additional background checks and paperwork. Some roles may require additional screening depending on the program.',
     items: [
       { value: 'Lighthouse Facilitator or Coordinator', label: 'Lighthouse Facilitator or Coordinator', description: 'Commit to helping lead weekly teen meetings — the heart of the program.' },
+      { value: 'Host a Lighthouse Activity', label: 'Host a Lighthouse Activity', description: 'One-time fun: teach a skill you love, or host the teens at your studio.' },
       { value: 'SafeTalk Volunteer', label: 'SafeTalk Volunteer', description: 'Help teach K–5 kids to recognize unsafe situations.' },
-      { value: 'Host a Lighthouse Activity', label: 'Host a Lighthouse Activity', description: 'One-time fun: teach a skill you love, from sewing to pottery.' },
     ],
   },
   {
     heading: 'Tier 4 — Engage with the Kids at the SafeHaven Shelter',
-    note: 'This one is so fulfilling! You’ll spend time directly with our kids at the shelter. Because you will be working with vulnerable populations, these roles require additional background checks and paperwork.',
+    note: 'This one is so fulfilling! You’ll spend time directly with our kids at the shelter. Because you will be working with vulnerable populations, these roles require additional background checks and paperwork. (Coming with a corporate, church, or school group for a one-time visit? Group events are arranged directly with our team — no individual vetting needed. Just check what interests you and note your group above.)',
     items: [
       { value: 'Cook a Meal with our Kids', label: 'Cook a Meal with our Kids', description: 'Cook dinner at the shelter with our residents.' },
       { value: 'Garden with our Kids', label: 'Garden with our Kids', description: 'Garden side by side with our kids.' },
@@ -98,6 +98,7 @@ const TIER_REQUIREMENTS = [
     requirements: [
       'Everything in Tier 3, except the health requirement is a medical form completed by your doctor instead of a self-attestation',
       'Background checks (DCF CPS + CT criminal history)',
+      'One-time group visits: arranged directly with our team — no individual application needed.',
     ],
   },
 ] as const
