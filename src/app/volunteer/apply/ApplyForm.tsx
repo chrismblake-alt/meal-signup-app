@@ -1,6 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+// This application is long, and losing it to a refresh or a stray back button
+// means starting over. Keep a draft on the volunteer's own device so they can
+// step away and come back. It holds real PII (address, emergency contact,
+// references), so it is cleared the moment the application is submitted, can be
+// cleared by hand from the banner, and expires on its own after a week.
+const DRAFT_KEY = 'kic-volunteer-application-draft'
+const DRAFT_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 const TIERS = [
   {
@@ -35,18 +43,20 @@ const BACKGROUND_CHECK_STEPS = [
 ]
 
 const CONDUCT_BULLETS = [
+  'These standards cover every child you meet through Kids In Crisis — at our SafeHaven Shelter and in our school- and community-based programs like SafeTalk and Lighthouse alike.',
   'Your relationship with the kids exists only within Kids In Crisis programs — no contact outside, and no staying in touch after, even when a child asks. Kids here may form attachments quickly, and these boundaries protect them from another loss.',
-  'Never share your phone number, address, or social media with residents — and no visits to your home, ever.',
-  'No gifts to a child (even small treats) without their Social Worker’s OK, and no accepting gifts from kids or their families.',
+  'Never share your phone number, address, or social media with any child you meet through us — and no visits to your home, ever.',
+  'No gifts to a child (even small treats) without the OK of their Social Worker or the program staff member you work with, and no accepting gifts from kids or their families.',
   'If you’re ever unsure what’s appropriate, ask a staff member — that’s always the right move.',
 ]
 
 const CONFIDENTIALITY_BULLETS = [
-  'Everything about our residents is confidential: their names, faces, stories, why they’re here, even the fact that they’re here at all.',
+  'Everything about the children you meet through Kids In Crisis is confidential: their names, faces, stories, why they’re here, even the fact that they’re here at all.',
+  'This covers our SafeHaven Shelter residents and the children in our school- and community-based programs equally. Anything a child shares with you during a SafeTalk or Lighthouse session is held in exactly the same confidence as anything shared at the shelter.',
   'This applies during your time with us and forever after.',
   'You may not share information about our kids with anyone — not family, not friends, not social media.',
-  'Breaking this confidentiality isn’t just against our policy — it’s against state law, punishable by a fine of up to $1,000, up to a year of imprisonment, or both.',
-  'The statute below is the full law. The summary above is to help you understand it, but you are agreeing to the statute itself.',
+  'Breaking this confidentiality is a violation of Kids In Crisis policy in every program. For children involved with the Department of Children and Families, it also breaks state law — punishable by a fine of up to $1,000, up to a year of imprisonment, or both.',
+  'The statute below is the full law. The summary above is to help you understand it, but you are agreeing to the statute itself and to Kids In Crisis’s policy of extending that same confidentiality to every child in every one of our programs.',
 ]
 
 interface ApplyFormProps {
@@ -119,6 +129,9 @@ const INITIAL_STATE: FormState = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+const isUntouched = (f: FormState) =>
+  (Object.keys(INITIAL_STATE) as Array<keyof FormState>).every((k) => f[k] === INITIAL_STATE[k])
+
 function LegalBox({ text }: { text: string }) {
   return (
     <div className="max-h-[300px] overflow-y-auto border border-gray-300 rounded-lg p-4 bg-gray-50 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
@@ -145,6 +158,65 @@ export default function ApplyForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState<null | { tier: string }>(null)
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null)
+  // Gates the save effect so the first render can't overwrite a stored draft
+  // with the empty initial state before the restore pass has run.
+  const draftRestored = useRef(false)
+
+  const clearDraft = () => {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY)
+    } catch {
+      // Nothing to do — the draft is a convenience, not a requirement.
+    }
+    setDraftSavedAt(null)
+  }
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as { savedAt?: number; form?: Partial<FormState> }
+        if (parsed?.savedAt && parsed.form && Date.now() - parsed.savedAt < DRAFT_TTL_MS) {
+          // Spread onto INITIAL_STATE so a draft saved before a field was added
+          // still produces a complete form. The honeypot always starts empty.
+          setForm({ ...INITIAL_STATE, ...parsed.form, website: '' })
+          setDraftSavedAt(parsed.savedAt)
+        } else {
+          window.localStorage.removeItem(DRAFT_KEY)
+        }
+      }
+    } catch {
+      // A corrupt or unreadable draft must never block the application.
+      try {
+        window.localStorage.removeItem(DRAFT_KEY)
+      } catch {}
+    }
+    draftRestored.current = true
+  }, [])
+
+  useEffect(() => {
+    if (!draftRestored.current || isUntouched(form)) return
+    const timer = setTimeout(() => {
+      const savedAt = Date.now()
+      try {
+        // The honeypot is deliberately not persisted.
+        const draft: Partial<FormState> = { ...form }
+        delete draft.website
+        window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt, form: draft }))
+        setDraftSavedAt(savedAt)
+      } catch {
+        // Private browsing or a full quota — saving is best effort.
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [form])
+
+  const discardDraft = () => {
+    clearDraft()
+    setForm(INITIAL_STATE)
+    setError('')
+  }
 
   const isTier3 = form.tier === 'Tier 3'
   const isTier4 = form.tier === 'Tier 4'
@@ -218,6 +290,8 @@ export default function ApplyForm({
       if (!response.ok) {
         throw new Error(data.error || 'Something went wrong')
       }
+      // The application is safely on the server — take the PII off their device.
+      clearDraft()
       setSubmitted({ tier: typeof data.tier === 'string' ? data.tier : form.tier })
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (err) {
@@ -288,6 +362,19 @@ export default function ApplyForm({
             .
           </p>
         </div>
+
+        {draftSavedAt !== null && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="text-sm text-gray-600">
+              Draft saved on this device at{' '}
+              {new Date(draftSavedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+              . We&rsquo;ll keep it for 7 days so you can finish later.
+            </p>
+            <button type="button" onClick={discardDraft} className="text-sm text-[#e31837] underline">
+              Clear draft
+            </button>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Honeypot — hidden from users, tempting to bots. */}
@@ -426,7 +513,7 @@ export default function ApplyForm({
             <SectionHeading number={3} title="Your Experience" />
             <div className="space-y-4">
               <div>
-                <label htmlFor="priorExperience" className="form-label">What prior volunteer experience do you have?</label>
+                <label htmlFor="priorExperience" className="form-label">Do you have any prior volunteer experience?</label>
                 <textarea id="priorExperience" rows={3} className="form-input" value={form.priorExperience} onChange={(e) => set('priorExperience', e.target.value)} />
               </div>
               <div>
@@ -504,7 +591,8 @@ export default function ApplyForm({
               <p className="text-sm text-amber-900 mb-2">
                 Connecticut law (General Statutes Sec. 17a-28) protects the records and identities of
                 children who receive services from the Department of Children and Families — including
-                the kids in our care. As a volunteer, here&rsquo;s what this means for you:
+                the kids in our care. Kids In Crisis holds you to that same standard for every child you
+                meet in any of our programs. As a volunteer, here&rsquo;s what this means for you:
               </p>
               <ul className="list-disc pl-5 space-y-1.5 text-sm text-amber-900">
                 {CONFIDENTIALITY_BULLETS.map((b, i) => (
@@ -517,7 +605,9 @@ export default function ApplyForm({
               <input type="checkbox" className="accent-[#e31837] mt-1" checked={form.agreeConfidentiality} onChange={(e) => set('agreeConfidentiality', e.target.checked)} />
               <span className="text-sm text-gray-700">
                 I have read the above Connecticut General Statute and understand that as a volunteer of
-                Kids in Crisis, Inc. I am mandated to abide by this statute regarding confidentiality. *
+                Kids in Crisis, Inc. I am mandated to abide by this statute regarding confidentiality. I
+                further agree to keep the same confidentiality for every child I meet through any Kids In
+                Crisis program, including SafeTalk and Lighthouse. *
               </span>
             </label>
           </div>
@@ -525,12 +615,21 @@ export default function ApplyForm({
           {/* SECTION 7 */}
           <div className="card">
             <SectionHeading number={7} title="Guidelines for Interacting with Residents" />
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+              <p className="font-semibold text-amber-900 mb-2">Which of these apply to you</p>
+              <p className="text-sm text-amber-900">
+                These guidelines are written for time spent with our SafeHaven Shelter residents — some,
+                like locking up valuables and asking a counselor for scissors, only come up on-site. If
+                you&rsquo;re volunteering with SafeTalk or Lighthouse, follow them wherever they fit your
+                setting. The confidentiality points apply everywhere, without exception.
+              </p>
+            </div>
             <LegalBox text={residentGuidelines} />
             <label className="flex items-start gap-3 mt-4 cursor-pointer">
               <input type="checkbox" className="accent-[#e31837] mt-1" checked={form.agreeResidentGuidelines} onChange={(e) => set('agreeResidentGuidelines', e.target.checked)} />
               <span className="text-sm text-gray-700">
-                I have read and understand the expectations of Kids in Crisis and the importance of
-                confidentiality. *
+                I have read these guidelines and will follow them whenever I am with Kids In Crisis
+                children. *
               </span>
             </label>
           </div>
@@ -541,12 +640,14 @@ export default function ApplyForm({
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
                 <p className="font-semibold text-amber-900 mb-2">In plain English</p>
                 <p className="text-sm text-amber-900">
-                  Because your role involves regular contact with our kids, Connecticut law makes you a
+                  Because your role involves regular contact with children, Connecticut law makes you a
                   mandated reporter. That means if you ever have reasonable cause to suspect a child has
-                  been abused or neglected, you are legally required to make sure it gets reported. At
-                  Kids In Crisis, that means: bring it to a staff member right away — they will help
-                  evaluate and file the report with you. Reports must be made quickly (within 12 hours),
-                  and good-faith reporters are protected by law.
+                  been abused or neglected, you are legally required to make sure it gets reported. This
+                  applies the same way to every child you work with — a child staying at our SafeHaven
+                  Shelter and a child who tells you something during a SafeTalk or Lighthouse session are
+                  treated identically under the law. At Kids In Crisis, that means: bring it to a staff
+                  member right away — they will help evaluate and file the report with you. Reports must
+                  be made quickly (within 12 hours), and good-faith reporters are protected by law.
                 </p>
               </div>
               <LegalBox text={mandatedReporter} />
