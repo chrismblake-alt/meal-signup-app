@@ -5,15 +5,34 @@ import { useState } from 'react'
 const TIERS = [
   {
     value: 'Tier 3',
-    title: 'Tier 3 — Lead One of Our External Programs',
+    title: 'Tier 3 — Participate in One of Our External Programs',
     roles: 'Lighthouse Facilitator or Coordinator · Host a Lighthouse Activity · SafeTalk Volunteer',
   },
   {
     value: 'Tier 4',
     title: 'Tier 4 — Engage with the Kids at the SafeHaven Shelter',
-    roles: 'Help our Kids with Homework · Share Your Arts with our Kids · Garden with our Kids · Cook a Meal with our Kids · Outdoor Fun with our Kids · Activities with Residents',
+    roles: 'Help our Kids with Homework · Share Your Talents with our Kids · Garden with our Kids · Cook a Meal with our Kids · Outdoor Fun with our Kids · Activities with Residents',
   },
 ] as const
+
+// Post-submission steps. Both tiers require the two state background checks;
+// only Tier 4 adds the doctor-completed medical form (Tier 3 self-attests in
+// Section 9).
+const MEDICAL_FORM_STEP = {
+  title: 'Doctor’s Medical Form',
+  body: 'We’ll send you a short medical form for your doctor to complete and sign.',
+}
+
+const BACKGROUND_CHECK_STEPS = [
+  {
+    title: 'DCF Background Check',
+    body: 'We’ll send you the DCF authorization form (DCF-3031) to complete.',
+  },
+  {
+    title: 'State Criminal History Check',
+    body: 'You’ll mail this form directly to the State of Connecticut with a $36 fee. We’ll send you the form and instructions. If the fee is a hardship, just let Jennifer know — we can discuss it.',
+  },
+]
 
 const CONDUCT_BULLETS = [
   'Your relationship with the kids exists only within Kids In Crisis programs — no contact outside, and no staying in touch after, even when a child asks. Kids here may form attachments quickly, and these boundaries protect them from another loss.',
@@ -209,50 +228,42 @@ export default function ApplyForm({
   }
 
   if (submitted) {
+    const submittedTier4 = submitted.tier === 'Tier 4'
+    const steps = submittedTier4
+      ? [MEDICAL_FORM_STEP, ...BACKGROUND_CHECK_STEPS]
+      : BACKGROUND_CHECK_STEPS
+
     return (
       <div className="py-8 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 md:p-8">
             <div className="text-green-600 text-5xl mb-4 text-center">&#10003;</div>
-            {submitted.tier === 'Tier 4' ? (
-              <>
-                <h2 className="text-2xl font-semibold text-green-800 mb-4 text-center">
-                  Application received — a few more steps
-                </h2>
-                <p className="text-green-800 mb-4">
+            <h2 className="text-2xl font-semibold text-green-800 mb-4 text-center">
+              Application received — a few more steps
+            </h2>
+            <p className="text-green-800 mb-4">
+              {submittedTier4 ? (
+                <>
                   Thank you! Jennifer will be in touch soon. Because you&rsquo;ll be spending time
                   directly with our kids at the shelter, Connecticut requires a medical form and two
                   background checks:
-                </p>
-                <ol className="list-decimal pl-6 space-y-3 text-green-800">
-                  <li>
-                    <span className="font-semibold">Doctor&rsquo;s Medical Form</span> — We&rsquo;ll send
-                    you a short medical form for your doctor to complete and sign.
-                  </li>
-                  <li>
-                    <span className="font-semibold">DCF Background Check</span> — We&rsquo;ll send you
-                    the DCF authorization form (DCF-3031) to complete.
-                  </li>
-                  <li>
-                    <span className="font-semibold">State Criminal History Check</span> — You&rsquo;ll
-                    mail this form directly to the State of Connecticut with a $36 fee. We&rsquo;ll
-                    send you the form and instructions. If the fee is a hardship, just let Jennifer
-                    know — we can discuss it.
-                  </li>
-                </ol>
-                <p className="text-green-800 mt-4 font-medium">Nothing else is needed from you today.</p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-2xl font-semibold text-green-800 mb-4 text-center">
-                  Application received!
-                </h2>
-                <p className="text-green-800 text-center">
-                  Thank you. Jennifer will be in touch soon to schedule your meeting and training
-                  session. Nothing else is needed from you today.
-                </p>
-              </>
-            )}
+                </>
+              ) : (
+                <>
+                  Thank you! Jennifer will be in touch soon to schedule your meeting and training
+                  session. Because you&rsquo;ll be working with children in our community programs,
+                  Connecticut requires two background checks:
+                </>
+              )}
+            </p>
+            <ol className="list-decimal pl-6 space-y-3 text-green-800">
+              {steps.map((step) => (
+                <li key={step.title}>
+                  <span className="font-semibold">{step.title}</span> — {step.body}
+                </li>
+              ))}
+            </ol>
+            <p className="text-green-800 mt-4 font-medium">Nothing else is needed from you today.</p>
           </div>
         </div>
       </div>
@@ -381,19 +392,21 @@ export default function ApplyForm({
               })}
             </div>
 
-            {isTier4 && (
+            {(isTier3 || isTier4) && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
                 <p className="font-semibold text-amber-900 mb-2">A note about what comes next</p>
                 <p className="text-sm text-amber-900 mb-2">
-                  The children at our shelter have often been through a lot, and keeping them safe is at
-                  the heart of everything we do. Because Tier 4 volunteers spend time directly with our
-                  kids, Connecticut requires — and we wholeheartedly agree — a few extra steps:
+                  {isTier4
+                    ? 'The children at our shelter have often been through a lot, and keeping them safe is at the heart of everything we do. Because Tier 4 volunteers spend time directly with our kids, Connecticut requires — and we wholeheartedly agree — a few extra steps:'
+                    : 'The children in our community programs are counting on us to keep them safe, and that’s at the heart of everything we do. Because Tier 3 volunteers work directly with children, Connecticut requires — and we wholeheartedly agree — a few extra steps:'}
                 </p>
                 <ul className="list-disc pl-5 space-y-1.5 text-sm text-amber-900">
-                  <li>
-                    Medical clearance from your doctor (instead of the self-attestation) — we’ll send you
-                    the simple form
-                  </li>
+                  {isTier4 && (
+                    <li>
+                      Medical clearance from your doctor (instead of the self-attestation) — we’ll send you
+                      the simple form
+                    </li>
+                  )}
                   <li>Two background checks, which our team will guide you through step by step</li>
                 </ul>
                 <p className="text-sm text-amber-900 mt-2">

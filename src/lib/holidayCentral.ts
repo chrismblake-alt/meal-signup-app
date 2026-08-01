@@ -19,7 +19,7 @@ export const HOLIDAY_CENTRAL_INTERESTS = [
   {
     value: 'Donate Gift Cards',
     label: 'Donate Gift Cards',
-    description: 'Any amount toward Visa, Target, Old Navy, or similar for last-minute needs.',
+    description: 'Any amount toward Amazon, Visa, Target, Old Navy, or similar for last-minute needs.',
   },
   {
     value: 'Create an Office Giving Tree',
